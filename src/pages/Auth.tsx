@@ -32,18 +32,22 @@ const Auth = () => {
   useEffect(() => {
     // Only run this effect when on /auth page and user state changes
     // Don't interfere with form submission redirects
+    // Skip if we're currently loading (form submission in progress)
     if (user && location.pathname === '/auth' && !loading) {
       // Small delay to avoid race conditions with form submission
       const timer = setTimeout(() => {
-        // Check if email is confirmed
-        if (user.email_confirmed_at) {
-          const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
-          navigate(from, { replace: true });
-        } else {
-          // If not verified, redirect to verification waiting page
-          navigate('/auth/verify-waiting', { replace: true });
+        // Only redirect if we're still on /auth (not already navigating)
+        if (window.location.pathname === '/auth') {
+          // Check if email is confirmed
+          if (user.email_confirmed_at) {
+            const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
+            navigate(from, { replace: true });
+          } else {
+            // If not verified, redirect to verification waiting page
+            navigate('/auth/verify-waiting', { replace: true });
+          }
         }
-      }, 100);
+      }, 200);
       
       return () => clearTimeout(timer);
     }
@@ -102,6 +106,9 @@ const Auth = () => {
           throw signUpError;
         }
 
+        // Set loading to false before navigation to prevent useEffect interference
+        setLoading(false);
+
         toast({
           title: 'Account created!',
           description: 'Please check your email to verify your account before continuing.',
@@ -109,7 +116,10 @@ const Auth = () => {
         
         // Redirect to email verification waiting page immediately
         // Use replace: true to prevent back navigation
-        navigate('/auth/verify-waiting', { replace: true });
+        // Use setTimeout to ensure navigation happens after state updates
+        setTimeout(() => {
+          navigate('/auth/verify-waiting', { replace: true });
+        }, 100);
       } else {
         // Validate with Zod
         const result = signInSchema.safeParse({
