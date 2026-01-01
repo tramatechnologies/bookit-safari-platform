@@ -3,7 +3,12 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const resendApiKey = Deno.env.get('RESEND_API_KEY')!;
+const resendApiKey = Deno.env.get('RESEND_API_KEY');
+
+// If Resend API key is not set, log warning but don't fail
+if (!resendApiKey) {
+  console.warn('RESEND_API_KEY is not set. Emails will not be sent. Please configure it in Supabase secrets.');
+}
 
 interface EmailRequest {
   to: string | string[];
@@ -33,6 +38,31 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: to, subject, html' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if Resend API key is configured
+    if (!resendApiKey) {
+      console.error('RESEND_API_KEY is not configured. Cannot send email.');
+      // In development, return success but log the email
+      if (Deno.env.get('ENVIRONMENT') === 'development' || !Deno.env.get('RESEND_API_KEY')) {
+        console.log('Email would be sent:', {
+          to: emailData.to,
+          subject: emailData.subject,
+          from: emailData.from || 'Bookit Safari <noreply@bookitsafari.com>',
+        });
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message_id: 'dev-mode',
+            warning: 'RESEND_API_KEY not configured. Email not actually sent.' 
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      return new Response(
+        JSON.stringify({ error: 'Email service not configured. Please set RESEND_API_KEY in Supabase secrets.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
 

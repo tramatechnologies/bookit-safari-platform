@@ -17,7 +17,7 @@ const EmailVerificationWaiting = () => {
       
       // Check if email is already verified
       if (user.email_confirmed_at) {
-        navigate('/');
+        navigate('/dashboard');
         return;
       }
 
@@ -26,7 +26,7 @@ const EmailVerificationWaiting = () => {
         setChecking(true);
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user?.email_confirmed_at) {
-          navigate('/');
+          navigate('/dashboard');
         }
         setChecking(false);
       };

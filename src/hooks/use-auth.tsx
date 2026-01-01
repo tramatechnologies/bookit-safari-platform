@@ -57,6 +57,7 @@ export const useAuth = () => {
         data: {
           full_name: fullName,
         },
+        emailRedirectTo: `${window.location.origin}/auth/verify-email?redirect=/dashboard`,
       },
     });
 

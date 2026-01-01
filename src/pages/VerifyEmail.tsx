@@ -48,9 +48,12 @@ const VerifyEmail = () => {
             setStatus('success');
             setMessage('Your email has been verified successfully!');
             
-            // Redirect to dashboard/home after 2 seconds
+            // Get redirect URL from query params, default to dashboard
+            const redirectTo = searchParams.get('redirect') || '/dashboard';
+            
+            // Redirect to dashboard after 2 seconds
             setTimeout(() => {
-              navigate('/');
+              navigate(redirectTo);
             }, 2000);
           }
         }
@@ -68,11 +71,12 @@ const VerifyEmail = () => {
     if (user?.email_confirmed_at && status === 'loading') {
       setStatus('success');
       setMessage('Your email is already verified!');
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
       setTimeout(() => {
-        navigate('/');
+        navigate(redirectTo);
       }, 2000);
     }
-  }, [user, status, navigate]);
+  }, [user, status, navigate, searchParams]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-6 py-12">
@@ -120,9 +124,12 @@ const VerifyEmail = () => {
                   variant="teal" 
                   size="lg" 
                   className="w-full"
-                  onClick={() => navigate('/')}
+                  onClick={() => {
+                    const redirectTo = searchParams.get('redirect') || '/dashboard';
+                    navigate(redirectTo);
+                  }}
                 >
-                  Continue to Home
+                  Go to Dashboard
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
                 {!user && (

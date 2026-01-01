@@ -75,7 +75,7 @@ const Auth = () => {
 
         toast({
           title: 'Account created!',
-          description: 'Please check your email to verify your account.',
+          description: 'Please check your email to verify your account before continuing.',
         });
         
         // Redirect to email verification waiting page
@@ -104,13 +104,26 @@ const Auth = () => {
           return;
         }
 
-        await signIn(formData.email, formData.password);
-        toast({
-          title: 'Welcome back!',
-          description: 'You have been signed in successfully.',
-        });
-        const from = (location.state as { from?: Location })?.from?.pathname || '/';
-        navigate(from, { replace: true });
+        const { data, error: signInError } = await signIn(formData.email, formData.password);
+        
+        if (signInError) throw signInError;
+
+        // Check if email is verified
+        if (data?.user?.email_confirmed_at) {
+          toast({
+            title: 'Welcome back!',
+            description: 'You have been signed in successfully.',
+          });
+          const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
+          navigate(from, { replace: true });
+        } else {
+          toast({
+            title: 'Email verification required',
+            description: 'Please verify your email address to continue.',
+            variant: 'destructive',
+          });
+          navigate('/auth/verify-waiting');
+        }
       }
     } catch (error: any) {
       toast({

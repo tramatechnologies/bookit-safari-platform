@@ -18,6 +18,7 @@ import Payment from "./pages/Payment";
 import BookingConfirmation from "./pages/BookingConfirmation";
 import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
+import PassengerDashboard from "./pages/PassengerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminOperators from "./pages/AdminOperators";
 import AdminCommissions from "./pages/AdminCommissions";
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/booking/:scheduleId" element={<Booking />} />
             <Route path="/booking/:bookingId/payment" element={<Payment />} />
             <Route path="/booking/:bookingId/confirmation" element={<BookingConfirmation />} />
+            <Route path="/dashboard" element={<PassengerDashboard />} />
             <Route path="/bookings" element={<MyBookings />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/admin" element={<AdminDashboard />} />

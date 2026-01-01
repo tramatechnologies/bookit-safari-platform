@@ -108,13 +108,13 @@ const AuthCallback = () => {
         setStatus('success');
         setMessage('Successfully signed in!');
         setTimeout(() => {
-          navigate('/');
+          navigate('/dashboard');
         }, 1500);
       } else {
         setStatus('success');
         setMessage('Please verify your email to continue.');
         setTimeout(() => {
-          navigate('/auth/verify');
+          navigate('/auth/verify-waiting');
         }, 1500);
       }
     }

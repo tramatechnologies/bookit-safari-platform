@@ -76,8 +76,13 @@ const Header = () => {
             {user ? (
               <>
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/bookings">
+                  <Link to="/dashboard">
                     <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/bookings">
                     Bookings
                   </Link>
                 </Button>

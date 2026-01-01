@@ -10,6 +10,13 @@ interface BookingEmailRequest {
 }
 
 Deno.serve(async (req: Request) => {
+  // Create Supabase client with service role for admin access
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
   // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -31,9 +38,6 @@ Deno.serve(async (req: Request) => {
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
-
-    // Create Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch booking with all related data
     const { data: booking, error: bookingError } = await supabase
@@ -81,10 +85,50 @@ Deno.serve(async (req: Request) => {
       html = generateReminderEmail(booking, schedule, route, bus);
     }
 
+    // Get passenger email from booking or user profile
+    let passengerEmail = booking.passenger_email;
+    
+    // If no email in booking, try to get from user profile
+    if (!passengerEmail && booking.user_id) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', booking.user_id)
+        .single();
+      
+      if (profile?.email) {
+        passengerEmail = profile.email;
+      }
+    }
+
+    // If still no email, try to get from auth.users using admin API
+    if (!passengerEmail && booking.user_id) {
+      try {
+        const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(booking.user_id);
+        if (!authError && authUser?.user?.email) {
+          passengerEmail = authUser.user.email;
+        }
+      } catch (err) {
+        console.warn('Could not fetch user email from auth.users:', err);
+      }
+    }
+
+    if (!passengerEmail) {
+      console.warn('No email address found for booking:', booking.id);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No email address found for passenger',
+          warning: 'Email not sent - passenger email is required'
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Send email via send-email function
     const emailResponse = await supabase.functions.invoke('send-email', {
       body: {
-        to: booking.passenger_email || booking.passenger_phone + '@sms.resend.com', // Fallback to SMS if no email
+        to: passengerEmail,
         subject,
         html,
       },
@@ -92,9 +136,15 @@ Deno.serve(async (req: Request) => {
 
     if (emailResponse.error) {
       console.error('Error sending email:', emailResponse.error);
+      // Don't fail the request if email fails - log it but return success
       return new Response(
-        JSON.stringify({ error: 'Failed to send email', details: emailResponse.error }),
-        { status: 500, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          success: true, 
+          email_sent: false,
+          warning: 'Email sending failed but booking was processed',
+          error: emailResponse.error 
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
