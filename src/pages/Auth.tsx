@@ -18,7 +18,6 @@ const Auth = () => {
   const [isRegister, setIsRegister] = useState(searchParams.get('mode') === 'register');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [justSignedUp, setJustSignedUp] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -28,21 +27,19 @@ const Auth = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Redirect if already logged in AND email is verified
-  // But don't redirect if user just signed up (let the signup handler do it)
+  // But don't redirect if we're on the auth page (let the form handler do it)
   useEffect(() => {
-    if (user && !justSignedUp) {
+    if (user && location.pathname === '/auth') {
       // Check if email is confirmed
       if (user.email_confirmed_at) {
         const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
         navigate(from, { replace: true });
       } else {
-        // If not verified and not on verify-waiting page, redirect to verification waiting page
-        if (location.pathname !== '/auth/verify-waiting') {
-          navigate('/auth/verify-waiting', { replace: true });
-        }
+        // If not verified, redirect to verification waiting page
+        navigate('/auth/verify-waiting', { replace: true });
       }
     }
-  }, [user, navigate, location, justSignedUp]);
+  }, [user, navigate, location]);
 
   useEffect(() => {
     setIsRegister(searchParams.get('mode') === 'register');
@@ -102,11 +99,11 @@ const Auth = () => {
           description: 'Please check your email to verify your account before continuing.',
         });
         
-        // Set flag to prevent useEffect from redirecting
-        setJustSignedUp(true);
-        
-        // Redirect to email verification waiting page
-        navigate('/auth/verify-waiting', { replace: true });
+        // Redirect to email verification waiting page immediately
+        // Use setTimeout to ensure navigation happens after state updates
+        setTimeout(() => {
+          navigate('/auth/verify-waiting', { replace: true });
+        }, 0);
       } else {
         // Validate with Zod
         const result = signInSchema.safeParse({

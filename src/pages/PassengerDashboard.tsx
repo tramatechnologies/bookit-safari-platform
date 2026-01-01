@@ -21,7 +21,7 @@ const PassengerDashboard = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
       
       if (error && error.code !== 'PGRST116') {
@@ -59,7 +59,7 @@ const PassengerDashboard = () => {
 
       const { data: bookings, error } = await supabase
         .from('bookings')
-        .select('id, status, created_at, total_price_tzs, total_amount_tzs')
+        .select('id, status, created_at, total_amount_tzs')
         .eq('user_id', user.id)
         .gte('created_at', startDate.toISOString());
 

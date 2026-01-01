@@ -32,7 +32,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
       
       if (error && error.code !== 'PGRST116') {
