@@ -149,7 +149,8 @@ const PassengerDashboard = () => {
                 Book Trip
               </Button>
             </div>
-          </header>
+          </div>
+        </header>
 
           {/* Dashboard Content */}
           <div className="p-6">
@@ -310,9 +311,9 @@ const PassengerDashboard = () => {
               )}
             </div>
           </div>
-        </DashboardLayout>
-      </ProtectedRoute>
-    );
-  };
+      </DashboardLayout>
+    </ProtectedRoute>
+  );
+};
 
 export default PassengerDashboard;
