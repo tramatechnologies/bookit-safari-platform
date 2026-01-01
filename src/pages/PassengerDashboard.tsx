@@ -18,7 +18,6 @@ const PassengerDashboard = () => {
       navigate('/auth/verify-waiting', { replace: true });
     }
   }, [user, navigate]);
-  const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
 
   // Fetch user profile
