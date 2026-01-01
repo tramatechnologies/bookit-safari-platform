@@ -28,12 +28,23 @@ export const useAuth = () => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthState({
-        user: session?.user ?? null,
-        session,
-        loading: false,
-      });
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Handle user deletion or account disabled
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        // Clear local state when user is signed out or deleted
+        setAuthState({
+          user: null,
+          session: null,
+          loading: false,
+        });
+      } else {
+        // Update state with current session
+        setAuthState({
+          user: session?.user ?? null,
+          session,
+          loading: false,
+        });
+      }
     });
 
     return () => subscription.unsubscribe();

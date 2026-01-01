@@ -18,8 +18,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!user) {
-    // Redirect to login with return path
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    // User not authenticated or account may have been deleted
+    // Redirect to login with return path and show message
+    return <Navigate to="/auth" state={{ from: location, message: 'Please sign in to access this page' }} replace />;
   }
 
   return <>{children}</>;

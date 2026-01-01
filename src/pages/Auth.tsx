@@ -77,7 +77,21 @@ const Auth = () => {
 
         const { data, error: signUpError } = await signUp(formData.email, formData.password, formData.fullName);
         
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          // Check if user already exists
+          const errorMsg = signUpError.message?.toLowerCase() || '';
+          if (errorMsg.includes('already') || 
+              errorMsg.includes('exists') ||
+              errorMsg.includes('registered') ||
+              signUpError.status === 422) {
+            throw {
+              ...signUpError,
+              message: 'An account with this email already exists. Please sign in instead.',
+              isExistingUser: true,
+            };
+          }
+          throw signUpError;
+        }
 
         toast({
           title: 'Account created!',
@@ -112,7 +126,29 @@ const Auth = () => {
 
         const { data, error: signInError } = await signIn(formData.email, formData.password);
         
-        if (signInError) throw signInError;
+        if (signInError) {
+          // Provide user-friendly error messages
+          const errorMsg = signInError.message?.toLowerCase() || '';
+          const errorCode = signInError.status || signInError.code;
+          
+          // Check for deleted account
+          if (errorMsg.includes('user not found') ||
+              errorMsg.includes('user does not exist') ||
+              errorMsg.includes('account not found') ||
+              errorCode === 404) {
+            throw {
+              ...signInError,
+              message: 'No account found with this email address. The account may have been deleted. Please sign up for a new account.',
+              isDeletedAccount: true,
+            };
+          } else if (errorMsg.includes('invalid') || errorMsg.includes('credentials')) {
+            throw {
+              ...signInError,
+              message: 'Invalid email or password. Please check your credentials and try again.',
+            };
+          }
+          throw signInError;
+        }
 
         // Check if email is verified
         if (data?.user?.email_confirmed_at) {
@@ -132,11 +168,106 @@ const Auth = () => {
         }
       }
     } catch (error: any) {
+      // Handle specific authentication errors with user-friendly messages
+      let errorTitle = 'Authentication Error';
+      let errorDescription = 'An error occurred. Please try again.';
+      let showSwitchMode = false;
+
+      if (error?.message) {
+        const errorMessage = error.message.toLowerCase();
+        const errorCode = error.status || error.code;
+
+        if (isRegister) {
+          // Signup errors
+          if (error.isExistingUser ||
+              errorMessage.includes('already registered') || 
+              errorMessage.includes('user already exists') ||
+              errorMessage.includes('email address is already in use') ||
+              errorMessage.includes('already exists') ||
+              errorCode === 422) {
+            errorTitle = 'Account Already Exists';
+            errorDescription = 'An account with this email already exists. Please sign in instead or reset your password if you\'ve forgotten it.';
+            showSwitchMode = true;
+          } else if (errorMessage.includes('password') && errorMessage.includes('weak')) {
+            errorTitle = 'Weak Password';
+            errorDescription = 'Password is too weak. Please use a stronger password with at least 8 characters.';
+          } else if (errorMessage.includes('email')) {
+            errorTitle = 'Invalid Email';
+            errorDescription = 'Please enter a valid email address.';
+          } else {
+            errorDescription = error.message;
+          }
+        } else {
+          // Signin errors
+          if (error.isDeletedAccount ||
+              errorMessage.includes('user not found') ||
+              errorMessage.includes('user does not exist') ||
+              errorMessage.includes('account not found') ||
+              errorMessage.includes('user has been deleted') ||
+              errorMessage.includes('account may have been deleted') ||
+              errorCode === 404) {
+            errorTitle = 'Account Not Found';
+            errorDescription = 'No account found with this email address. The account may have been deleted. Please sign up for a new account if you want to continue.';
+            showSwitchMode = true; // Suggest signing up
+          } else if (errorMessage.includes('invalid login credentials') ||
+              errorMessage.includes('invalid password') ||
+              errorMessage.includes('wrong password') ||
+              errorCode === 400) {
+            errorTitle = 'Invalid Credentials';
+            errorDescription = 'The email or password you entered is incorrect. Please try again or reset your password if you\'ve forgotten it.';
+          } else if (errorMessage.includes('email not confirmed') ||
+                     errorMessage.includes('email not verified')) {
+            errorTitle = 'Email Not Verified';
+            errorDescription = 'Please verify your email address before signing in. Check your inbox for the verification link.';
+          } else if (errorMessage.includes('too many requests') ||
+                     errorMessage.includes('rate limit')) {
+            errorTitle = 'Too Many Attempts';
+            errorDescription = 'Too many login attempts. Please wait a few minutes before trying again.';
+          } else if (errorMessage.includes('user is disabled') ||
+                     errorMessage.includes('account disabled') ||
+                     errorMessage.includes('account suspended')) {
+            errorTitle = 'Account Disabled';
+            errorDescription = 'Your account has been disabled. Please contact support for assistance.';
+          } else {
+            errorDescription = error.message;
+          }
+        }
+      }
+
       toast({
-        title: 'Authentication Error',
-        description: error.message || 'An error occurred. Please try again.',
+        title: errorTitle,
+        description: errorDescription,
         variant: 'destructive',
+        duration: 5000, // Show for 5 seconds to give users time to read
       });
+
+      // If user already exists during signup, suggest switching to sign in
+      if (showSwitchMode && isRegister) {
+        setTimeout(() => {
+          setIsRegister(false);
+          toast({
+            title: 'Switched to Sign In',
+            description: 'We\'ve switched you to the sign in form. Enter your password to continue.',
+            duration: 3000,
+          });
+        }, 2000);
+      }
+      
+      // If account was deleted during signin, suggest switching to sign up
+      if (showSwitchMode && !isRegister && error.isDeletedAccount) {
+        setTimeout(() => {
+          setIsRegister(true);
+          toast({
+            title: 'Switched to Sign Up',
+            description: 'We\'ve switched you to the sign up form. Create a new account to continue.',
+            duration: 3000,
+          });
+        }, 2000);
+      }
+        setTimeout(() => {
+          setIsRegister(false);
+        }, 2000);
+      }
     } finally {
       setLoading(false);
     }
