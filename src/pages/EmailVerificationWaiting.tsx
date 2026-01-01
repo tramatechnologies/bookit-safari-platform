@@ -12,12 +12,24 @@ const EmailVerificationWaiting = () => {
   const [email, setEmail] = useState('');
 
   useEffect(() => {
+    // Check if redirected from email verification
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('verified') === 'true') {
+      // User just verified email, check status
+      setTimeout(async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email_confirmed_at) {
+          navigate('/dashboard', { replace: true });
+        }
+      }, 1000);
+    }
+
     if (user) {
       setEmail(user.email || '');
       
       // Check if email is already verified
       if (user.email_confirmed_at) {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
         return;
       }
 
@@ -26,7 +38,7 @@ const EmailVerificationWaiting = () => {
         setChecking(true);
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user?.email_confirmed_at) {
-          navigate('/dashboard');
+          navigate('/dashboard', { replace: true });
         }
         setChecking(false);
       };
@@ -40,7 +52,7 @@ const EmailVerificationWaiting = () => {
       return () => clearInterval(interval);
     } else {
       // If no user, redirect to auth
-      navigate('/auth?mode=register');
+      navigate('/auth?mode=register', { replace: true });
     }
   }, [user, navigate]);
 

@@ -14,23 +14,49 @@ const VerifyEmail = () => {
 
   useEffect(() => {
     const verifyEmail = async () => {
-      const token = searchParams.get('token');
-      const type = searchParams.get('type');
+      // Check if this is a redirect from Supabase after email verification
+      // Supabase handles verification automatically when user clicks email link
+      // The token is in URL hash (#access_token=...), Supabase processes it automatically
+      
+      // Check if user is already verified (Supabase auto-verifies on redirect)
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user?.email_confirmed_at) {
+        setStatus('success');
+        setMessage('Your email has been verified successfully!');
+        
+        // Get redirect URL from query params, default to dashboard
+        const redirectTo = searchParams.get('redirect') || '/dashboard';
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          navigate(redirectTo);
+        }, 2000);
+        return;
+      }
 
-      if (!token) {
+      // Check URL hash for Supabase tokens (password reset, etc.)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get('type') || searchParams.get('type');
+      
+      if (type === 'recovery') {
+        // For password reset, redirect to reset password page
+        // Supabase will handle the token automatically via URL hash
+        navigate('/auth/reset');
+        return;
+      }
+
+      // If no token and user not verified, show error
+      const token = searchParams.get('token') || hashParams.get('access_token');
+      if (!token && !session?.user?.email_confirmed_at) {
         setStatus('error');
         setMessage('Invalid verification link. Please check your email and try again.');
         return;
       }
 
-      try {
-        if (type === 'recovery') {
-          // For password reset, redirect to reset password page
-          // Supabase will handle the token automatically via URL hash
-          navigate('/auth/reset');
-          return;
-        } else {
-          // Verify the email using Supabase
+      // If we have a token, try to verify manually (fallback)
+      if (token && type !== 'recovery') {
+        try {
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: token,
             type: 'email',
@@ -48,18 +74,15 @@ const VerifyEmail = () => {
             setStatus('success');
             setMessage('Your email has been verified successfully!');
             
-            // Get redirect URL from query params, default to dashboard
             const redirectTo = searchParams.get('redirect') || '/dashboard';
-            
-            // Redirect to dashboard after 2 seconds
             setTimeout(() => {
               navigate(redirectTo);
             }, 2000);
           }
+        } catch (error: any) {
+          setStatus('error');
+          setMessage(error.message || 'An error occurred during verification.');
         }
-      } catch (error: any) {
-        setStatus('error');
-        setMessage(error.message || 'An error occurred during verification.');
       }
     };
 

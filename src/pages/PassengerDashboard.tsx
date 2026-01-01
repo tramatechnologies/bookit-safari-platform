@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar, Ticket, Search, Loader2, MapPin, Clock, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -10,6 +10,14 @@ import DashboardLayout from '@/components/DashboardLayout';
 
 const PassengerDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if email is not verified
+  useEffect(() => {
+    if (user && !user.email_confirmed_at) {
+      navigate('/auth/verify-waiting', { replace: true });
+    }
+  }, [user, navigate]);
   const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
 

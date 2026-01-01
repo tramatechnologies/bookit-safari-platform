@@ -28,18 +28,26 @@ const Auth = () => {
 
   // Redirect if already logged in AND email is verified
   // But don't redirect if we're on the auth page (let the form handler do it)
+  // Only redirect if we're actually on /auth path (not during form submission)
   useEffect(() => {
-    if (user && location.pathname === '/auth') {
-      // Check if email is confirmed
-      if (user.email_confirmed_at) {
-        const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
-        navigate(from, { replace: true });
-      } else {
-        // If not verified, redirect to verification waiting page
-        navigate('/auth/verify-waiting', { replace: true });
-      }
+    // Only run this effect when on /auth page and user state changes
+    // Don't interfere with form submission redirects
+    if (user && location.pathname === '/auth' && !loading) {
+      // Small delay to avoid race conditions with form submission
+      const timer = setTimeout(() => {
+        // Check if email is confirmed
+        if (user.email_confirmed_at) {
+          const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
+          navigate(from, { replace: true });
+        } else {
+          // If not verified, redirect to verification waiting page
+          navigate('/auth/verify-waiting', { replace: true });
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [user, navigate, location]);
+  }, [user, navigate, location, loading]);
 
   useEffect(() => {
     setIsRegister(searchParams.get('mode') === 'register');
@@ -100,10 +108,8 @@ const Auth = () => {
         });
         
         // Redirect to email verification waiting page immediately
-        // Use setTimeout to ensure navigation happens after state updates
-        setTimeout(() => {
-          navigate('/auth/verify-waiting', { replace: true });
-        }, 0);
+        // Use replace: true to prevent back navigation
+        navigate('/auth/verify-waiting', { replace: true });
       } else {
         // Validate with Zod
         const result = signInSchema.safeParse({
