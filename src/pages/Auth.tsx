@@ -455,10 +455,15 @@ const Auth = () => {
             onClick={async () => {
               try {
                 setLoading(true);
+                // Use production URL for OAuth redirect, fallback to current origin for local dev
+                const redirectUrl = import.meta.env.PROD 
+                  ? 'https://bookitsafari.com/auth/callback'
+                  : `${window.location.origin}/auth/callback`;
+                
                 const { data, error } = await supabase.auth.signInWithOAuth({
                   provider: 'google',
                   options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo: redirectUrl,
                     queryParams: {
                       access_type: 'offline',
                       prompt: 'consent',
