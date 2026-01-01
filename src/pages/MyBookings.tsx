@@ -262,7 +262,7 @@ const MyBookings = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 };
