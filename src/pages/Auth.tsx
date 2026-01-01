@@ -18,6 +18,7 @@ const Auth = () => {
   const [isRegister, setIsRegister] = useState(searchParams.get('mode') === 'register');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [justSignedUp, setJustSignedUp] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -27,18 +28,21 @@ const Auth = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Redirect if already logged in AND email is verified
+  // But don't redirect if user just signed up (let the signup handler do it)
   useEffect(() => {
-    if (user) {
+    if (user && !justSignedUp) {
       // Check if email is confirmed
       if (user.email_confirmed_at) {
         const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
         navigate(from, { replace: true });
       } else {
-        // If not verified, redirect to verification waiting page
-        navigate('/auth/verify-waiting', { replace: true });
+        // If not verified and not on verify-waiting page, redirect to verification waiting page
+        if (location.pathname !== '/auth/verify-waiting') {
+          navigate('/auth/verify-waiting', { replace: true });
+        }
       }
     }
-  }, [user, navigate, location]);
+  }, [user, navigate, location, justSignedUp]);
 
   useEffect(() => {
     setIsRegister(searchParams.get('mode') === 'register');
@@ -98,8 +102,11 @@ const Auth = () => {
           description: 'Please check your email to verify your account before continuing.',
         });
         
+        // Set flag to prevent useEffect from redirecting
+        setJustSignedUp(true);
+        
         // Redirect to email verification waiting page
-        navigate('/auth/verify-waiting');
+        navigate('/auth/verify-waiting', { replace: true });
       } else {
         // Validate with Zod
         const result = signInSchema.safeParse({
@@ -164,7 +171,7 @@ const Auth = () => {
             description: 'Please verify your email address to continue.',
             variant: 'destructive',
           });
-          navigate('/auth/verify-waiting');
+          navigate('/auth/verify-waiting', { replace: true });
         }
       }
     } catch (error: any) {
