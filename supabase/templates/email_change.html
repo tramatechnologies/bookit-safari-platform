@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Email Change - Bookit Safari</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%); padding: 40px 30px; text-align: center;">
+              <img src="https://bookitsafari.com/images/logo.png" alt="Bookit Safari Logo" style="max-width: 120px; height: auto; margin-bottom: 20px;" />
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold;">Confirm Email Change</h1>
+              <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.9;">Verify your new email address</p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151; line-height: 1.6;">Hello,</p>
+              
+              <p style="margin: 0 0 30px 0; font-size: 16px; color: #374151; line-height: 1.6;">
+                You requested to change your email address for your Bookit Safari account. Please confirm this change by clicking the button below.
+              </p>
+
+              <!-- Email Info -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f0fdfa; border-left: 4px solid #0d9488; border-radius: 8px; margin: 0 0 30px 0;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">New Email Address</p>
+                    <p style="margin: 0; font-size: 16px; font-weight: 600; color: #111827;">{{ .NewEmail }}</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Confirm Button -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
+                <tr>
+                  <td align="center" style="padding: 0;">
+                    <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 14px 32px; background-color: #0d9488; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Confirm Email Change</a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Security Notice -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #fef3c7; border-radius: 8px; margin: 0 0 30px 0;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <p style="margin: 0; font-size: 14px; color: #92400e; line-height: 1.6;">
+                      <strong>⚠️ Security Notice:</strong> If you didn't request this email change, please ignore this email and contact our support team immediately at <a href="mailto:support@bookitsafari.com" style="color: #92400e; font-weight: 600;">support@bookitsafari.com</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Expiry Notice -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
+                <tr>
+                  <td>
+                    <p style="margin: 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
+                      This confirmation link will expire in <strong>24 hours</strong>. After confirmation, your account will use the new email address.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Footer -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; border-top: 1px solid #e5e7eb; padding-top: 30px; margin-top: 30px;">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 20px 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
+                      Need help? Contact our support team at<br>
+                      <a href="mailto:support@bookitsafari.com" style="color: #0d9488; text-decoration: none; font-weight: 600;">support@bookitsafari.com</a>
+                    </p>
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                      © 2026 Bookit Safari. All rights reserved.<br>
+                      Bookit Safari is a product of Trama Technologies (Holding Company)<br>
+                      <a href="https://bookitsafari.com" style="color: #6b7280; text-decoration: none;">bookitsafari.com</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+

@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://bookitsafari.com/sitemap.xml
+
+# Disallow admin and operator dashboards
+Disallow: /admin/
+Disallow: /operator/
+Disallow: /booking/*/payment
+Disallow: /booking/*/confirmation
+Disallow: /auth/callback
+Disallow: /auth/verify
+Disallow: /auth/reset

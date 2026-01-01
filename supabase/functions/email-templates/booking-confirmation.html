@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Confirmed - Bookit Safari</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+  <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f3f4f6;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0d9488 0%, #f59e0b 100%); padding: 40px 30px; text-align: center;">
+              <img src="https://bookitsafari.com/images/logo.png" alt="Bookit Safari Logo" style="max-width: 120px; height: auto; margin-bottom: 20px;" />
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: bold;">Booking Confirmed!</h1>
+              <p style="margin: 10px 0 0 0; color: #ffffff; font-size: 16px; opacity: 0.9;">Your journey is ready</p>
+            </td>
+          </tr>
+
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 16px; color: #374151; line-height: 1.6;">Dear {{passenger_name}},</p>
+              
+              <p style="margin: 0 0 30px 0; font-size: 16px; color: #374151; line-height: 1.6;">
+                Your bus booking has been confirmed! We're excited to be part of your journey across Tanzania.
+              </p>
+
+              <!-- Booking Info Card -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f0fdfa; border-left: 4px solid #0d9488; border-radius: 8px; margin: 0 0 30px 0;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <h2 style="margin: 0 0 15px 0; color: #0d9488; font-size: 20px; font-weight: bold;">Booking Information</h2>
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #6b7280;">Booking Number</p>
+                    <p style="margin: 0 0 20px 0; font-size: 24px; font-weight: bold; font-family: monospace; color: #0f766e;">{{booking_number}}</p>
+                    <p style="margin: 0; font-size: 14px; color: #6b7280;">Status</p>
+                    <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: bold; color: #059669;">✓ Confirmed</p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Trip Details -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; margin: 0 0 30px 0;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <h3 style="margin: 0 0 20px 0; color: #0d9488; font-size: 18px; font-weight: bold;">Trip Details</h3>
+                    
+                    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                      <tr>
+                        <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                          <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Route</p>
+                          <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #111827;">{{departure_region}} → {{destination_region}}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                          <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Date</p>
+                          <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #111827;">{{departure_date}}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                          <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Departure Time</p>
+                          <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #111827;">{{departure_time}}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 10px 0;">
+                          <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Operator</p>
+                          <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #111827;">{{operator_name}}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Bus Information - Highlighted -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b; border-radius: 8px; margin: 0 0 30px 0;">
+                <tr>
+                  <td style="padding: 25px; text-align: center;">
+                    <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px;">🚌 Your Bus Information</p>
+                    <p style="margin: 0 0 10px 0; font-size: 36px; font-weight: bold; color: #78350f;">Bus {{bus_number}}</p>
+                    {{#if plate_number}}
+                    <p style="margin: 0 0 5px 0; font-size: 16px; font-family: monospace; color: #78350f; font-weight: 600;">Plate: {{plate_number}}</p>
+                    {{/if}}
+                    {{#if bus_type}}
+                    <p style="margin: 0 0 15px 0; font-size: 14px; color: #92400e;">{{bus_type}}</p>
+                    {{/if}}
+                    <p style="margin: 15px 0 0 0; padding: 12px; background-color: rgba(255, 255, 255, 0.5); border-radius: 6px; font-size: 13px; color: #78350f; font-weight: 600;">
+                      ⚠️ Please look for this bus at the terminal
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Seat & Payment Info -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; margin: 0 0 30px 0;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <h3 style="margin: 0 0 20px 0; color: #0d9488; font-size: 18px; font-weight: bold;">Seat & Payment Information</h3>
+                    
+                    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                      <tr>
+                        <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+                          <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Seats</p>
+                          <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #111827;">{{seat_numbers}}</p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 10px 0;">
+                          <p style="margin: 0; font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Total Amount</p>
+                          <p style="margin: 5px 0 0 0; font-size: 24px; font-weight: bold; color: #0d9488;">{{total_amount}}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Important Reminders -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 8px; margin: 0 0 30px 0;">
+                <tr>
+                  <td style="padding: 20px;">
+                    <h3 style="margin: 0 0 15px 0; color: #991b1b; font-size: 18px; font-weight: bold;">Important Reminders</h3>
+                    <ul style="margin: 0; padding-left: 20px; color: #7f1d1d; line-height: 1.8;">
+                      <li style="margin-bottom: 8px;">Arrive at the terminal at least <strong>30 minutes</strong> before departure</li>
+                      <li style="margin-bottom: 8px;">Look for <strong>Bus {{bus_number}}</strong> at the terminal</li>
+                      <li style="margin-bottom: 8px;">Bring a <strong>valid ID</strong> for verification</li>
+                      <li style="margin-bottom: 0;">Keep this email for reference</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px 0;">
+                <tr>
+                  <td align="center" style="padding: 0;">
+                    <a href="{{booking_url}}" style="display: inline-block; padding: 14px 32px; background-color: #0d9488; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">View Booking Details</a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Footer -->
+              <table role="presentation" style="width: 100%; border-collapse: collapse; border-top: 1px solid #e5e7eb; padding-top: 30px; margin-top: 30px;">
+                <tr>
+                  <td style="text-align: center;">
+                    <p style="margin: 0 0 10px 0; font-size: 16px; color: #374151; font-weight: 600;">Thank you for choosing Bookit Safari!</p>
+                    <p style="margin: 0 0 20px 0; font-size: 14px; color: #6b7280; line-height: 1.6;">
+                      If you have any questions, please contact our support team at<br>
+                      <a href="mailto:support@bookitsafari.com" style="color: #0d9488; text-decoration: none; font-weight: 600;">support@bookitsafari.com</a>
+                    </p>
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af;">
+                      © 2026 Bookit Safari. All rights reserved.<br>
+                      Bookit Safari is a product of Trama Technologies (Holding Company)<br>
+                      <a href="{{website_url}}" style="color: #6b7280; text-decoration: none;">bookitsafari.com</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+
