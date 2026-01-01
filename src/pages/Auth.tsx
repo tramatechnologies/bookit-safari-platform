@@ -264,10 +264,6 @@ const Auth = () => {
           });
         }, 2000);
       }
-        setTimeout(() => {
-          setIsRegister(false);
-        }, 2000);
-      }
     } finally {
       setLoading(false);
     }
