@@ -125,28 +125,52 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Log email attempt
+    console.log('Sending booking email:', {
+      booking_id: booking.id,
+      booking_number: booking.booking_number,
+      type,
+      passenger_email: passengerEmail,
+      has_html: !!html,
+      html_length: html.length,
+    });
+
     // Send email via send-email function
+    // Note: When invoking from another edge function, we need to use service role key for auth
     const emailResponse = await supabase.functions.invoke('send-email', {
       body: {
         to: passengerEmail,
         subject,
         html,
       },
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+      },
     });
 
     if (emailResponse.error) {
-      console.error('Error sending email:', emailResponse.error);
+      console.error('Error invoking send-email function:', {
+        error: emailResponse.error,
+        booking_id: booking.id,
+        passenger_email: passengerEmail,
+      });
       // Don't fail the request if email fails - log it but return success
       return new Response(
         JSON.stringify({ 
           success: true, 
           email_sent: false,
           warning: 'Email sending failed but booking was processed',
-          error: emailResponse.error 
+          error: emailResponse.error,
+          details: emailResponse.error?.message || 'Unknown error',
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
+
+    console.log('Email function invoked successfully:', {
+      booking_id: booking.id,
+      response: emailResponse.data,
+    });
 
     return new Response(JSON.stringify({ success: true, email_sent: true }), {
       status: 200,

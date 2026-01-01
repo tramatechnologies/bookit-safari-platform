@@ -112,11 +112,16 @@ Deno.serve(async (req: Request) => {
     `;
 
     // Send email via send-email function
+    // Use service role key for authentication when invoking from another function
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const emailResponse = await supabase.functions.invoke('send-email', {
       body: {
         to: booking.passenger_email || booking.passenger_phone + '@sms.resend.com',
         subject,
         html,
+      },
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
       },
     });
 

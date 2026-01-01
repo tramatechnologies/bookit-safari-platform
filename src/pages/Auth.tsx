@@ -26,11 +26,17 @@ const Auth = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Redirect if already logged in
+  // Redirect if already logged in AND email is verified
   useEffect(() => {
     if (user) {
-      const from = (location.state as { from?: Location })?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      // Check if email is confirmed
+      if (user.email_confirmed_at) {
+        const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
+        navigate(from, { replace: true });
+      } else {
+        // If not verified, redirect to verification waiting page
+        navigate('/auth/verify-waiting', { replace: true });
+      }
     }
   }, [user, navigate, location]);
 

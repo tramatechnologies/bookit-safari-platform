@@ -281,16 +281,36 @@ async function handlePaymentReceived(
 
   // Send booking confirmation email
   try {
-    await supabase.functions.invoke('send-booking-email', {
+    console.log('Invoking send-booking-email for booking:', payment.booking_id);
+    const emailResult = await supabase.functions.invoke('send-booking-email', {
       body: {
         booking_id: payment.booking_id,
         type: 'confirmation',
       },
+      headers: {
+        'Authorization': `Bearer ${supabaseServiceKey}`,
+      },
     });
-  } catch (emailError) {
-    if (import.meta.env.DEV) {
-      console.error('Error sending confirmation email:', emailError);
+    
+    if (emailResult.error) {
+      console.error('Error sending booking email:', {
+        error: emailResult.error,
+        booking_id: payment.booking_id,
+        details: emailResult.error?.message,
+      });
+    } else {
+      console.log('Booking email sent successfully:', {
+        booking_id: payment.booking_id,
+        result: emailResult.data,
+      });
     }
+  } catch (emailError: any) {
+    console.error('Exception sending confirmation email:', {
+      error: emailError,
+      message: emailError?.message,
+      stack: emailError?.stack,
+      booking_id: payment.booking_id,
+    });
     // Don't fail the webhook if email fails
   }
 

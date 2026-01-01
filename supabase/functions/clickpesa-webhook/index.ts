@@ -257,14 +257,31 @@ Deno.serve(async (req: Request) => {
         // Trigger booking confirmation email if payment completed
         if (sanitizedPayload.status === 'completed') {
           try {
-            await supabase.functions.invoke('send-booking-email', {
+            console.log('Invoking send-booking-email for booking:', bookingPayment.booking_id);
+            const emailResult = await supabase.functions.invoke('send-booking-email', {
               body: {
                 booking_id: bookingPayment.booking_id,
                 type: 'confirmation',
               },
+              headers: {
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
             });
-          } catch (emailError) {
-            console.error('Error sending confirmation email:', emailError);
+            
+            if (emailResult.error) {
+              console.error('Error sending confirmation email:', {
+                error: emailResult.error,
+                booking_id: bookingPayment.booking_id,
+              });
+            } else {
+              console.log('Confirmation email sent successfully:', bookingPayment.booking_id);
+            }
+          } catch (emailError: any) {
+            console.error('Exception sending confirmation email:', {
+              error: emailError,
+              message: emailError?.message,
+              booking_id: bookingPayment.booking_id,
+            });
             // Don't fail the webhook if email fails
           }
         }
@@ -333,14 +350,31 @@ Deno.serve(async (req: Request) => {
     // Trigger booking confirmation email if payment completed
     if (sanitizedPayload.status === 'completed') {
       try {
-        await supabase.functions.invoke('send-booking-email', {
+        console.log('Invoking send-booking-email for booking:', payment.booking_id);
+        const emailResult = await supabase.functions.invoke('send-booking-email', {
           body: {
             booking_id: payment.booking_id,
             type: 'confirmation',
           },
+          headers: {
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
         });
-      } catch (emailError) {
-        console.error('Error sending confirmation email:', emailError);
+        
+        if (emailResult.error) {
+          console.error('Error sending confirmation email:', {
+            error: emailResult.error,
+            booking_id: payment.booking_id,
+          });
+        } else {
+          console.log('Confirmation email sent successfully:', payment.booking_id);
+        }
+      } catch (emailError: any) {
+        console.error('Exception sending confirmation email:', {
+          error: emailError,
+          message: emailError?.message,
+          booking_id: payment.booking_id,
+        });
         // Don't fail the webhook if email fails
       }
     }

@@ -3,12 +3,12 @@ import { User, Mail, Phone, Save, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import DashboardLayout from '@/components/DashboardLayout';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { profileSchema } from '@/lib/validations/profile';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -34,7 +34,7 @@ const Profile = () => {
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('id', user.id)
           .single();
 
         if (!error && data) {
@@ -86,7 +86,7 @@ const Profile = () => {
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
-          user_id: user.id,
+          id: user.id, // Use id instead of user_id
           full_name: profile.full_name,
           phone: profile.phone || null,
         });
@@ -120,12 +120,10 @@ const Profile = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Header />
-
-        <div className="container mx-auto px-4 py-12 pt-24 max-w-2xl">
+      <DashboardLayout>
+        <div className="p-6 max-w-4xl">
           <div className="mb-8">
-            <h1 className="font-display text-4xl font-bold mb-2">My Profile</h1>
+            <h1 className="text-2xl font-bold mb-2">My Profile</h1>
             <p className="text-muted-foreground">
               Manage your account information and preferences
             </p>
@@ -219,9 +217,7 @@ const Profile = () => {
             </form>
           </div>
         </div>
-
-        <Footer />
-      </div>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 };

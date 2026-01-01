@@ -66,6 +66,14 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Log email attempt (without sensitive data)
+    console.log('Attempting to send email:', {
+      to: Array.isArray(emailData.to) ? emailData.to[0] : emailData.to,
+      subject: emailData.subject,
+      from: emailData.from || 'Bookit Safari <noreply@bookitsafari.com>',
+      hasApiKey: !!resendApiKey,
+    });
+
     // Send email via Resend API
     const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -82,16 +90,39 @@ Deno.serve(async (req: Request) => {
       }),
     });
 
-    if (!resendResponse.ok) {
-      const errorData = await resendResponse.json();
-      console.error('Resend API error:', errorData);
+    const responseText = await resendResponse.text();
+    let errorData: any;
+    let result: any;
+
+    try {
+      if (!resendResponse.ok) {
+        errorData = JSON.parse(responseText);
+        console.error('Resend API error:', {
+          status: resendResponse.status,
+          statusText: resendResponse.statusText,
+          error: errorData,
+        });
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to send email', 
+            details: errorData,
+            status: resendResponse.status,
+          }),
+          { status: resendResponse.status, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      result = JSON.parse(responseText);
+      console.log('Email sent successfully:', { message_id: result.id });
+    } catch (parseError) {
+      console.error('Failed to parse Resend response:', parseError, 'Response:', responseText);
       return new Response(
-        JSON.stringify({ error: 'Failed to send email', details: errorData }),
-        { status: resendResponse.status, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ 
+          error: 'Invalid response from Resend API', 
+          details: responseText.substring(0, 200) 
+        }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
       );
     }
-
-    const result = await resendResponse.json();
 
     return new Response(JSON.stringify({ success: true, message_id: result.id }), {
       status: 200,

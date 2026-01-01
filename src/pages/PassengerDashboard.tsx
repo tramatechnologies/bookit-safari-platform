@@ -1,23 +1,15 @@
 import { useState } from 'react';
-import { Calendar, Ticket, User, Search, Loader2, LogOut, Settings, Home, MapPin, Clock, Bus } from 'lucide-react';
+import { Calendar, Ticket, Search, Loader2, MapPin, Clock, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import DashboardLayout from '@/components/DashboardLayout';
 
 const PassengerDashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
 
@@ -128,26 +120,6 @@ const PassengerDashboard = () => {
     enabled: !!user,
   });
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Error signing out:', error);
-      }
-    }
-  };
-
-  const getInitials = (name: string | null | undefined) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   if (loadingProfile || loadingStats) {
     return (
@@ -161,113 +133,21 @@ const PassengerDashboard = () => {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-muted/30 flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-card border-r border-border flex flex-col fixed h-screen">
-          {/* Logo */}
-          <div className="p-6 border-b border-border">
-            <Link to="/" className="flex items-center gap-2">
-              <img 
-                src="/images/logo.png" 
-                alt="BookitSafari Logo" 
-                className="h-8 w-auto object-contain"
-              />
-              <span className="font-display text-lg font-bold text-foreground">
-                Bookit<span className="text-amber">Safari</span>
-              </span>
-            </Link>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
-            <Link
-              to="/dashboard"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-medium transition-colors"
-            >
-              <Home className="w-5 h-5" />
-              Dashboard
-            </Link>
-            <Link
-              to="/bookings"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <Ticket className="w-5 h-5" />
-              My Bookings
-            </Link>
-            <Link
-              to="/search"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <Search className="w-5 h-5" />
-              Book a Trip
-            </Link>
-            <Link
-              to="/profile"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            >
-              <User className="w-5 h-5" />
-              Profile
-            </Link>
-          </nav>
-
-          {/* User Section */}
-          <div className="p-4 border-t border-border">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start gap-3 h-auto p-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {getInitials(profile?.full_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  </div>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer">
-                    <User className="w-4 h-4 mr-2" />
-                    Profile Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/" className="cursor-pointer">
-                    <Home className="w-4 h-4 mr-2" />
-                    Back to Home
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 ml-64">
-          {/* Top Bar */}
-          <header className="bg-card border-b border-border sticky top-0 z-10">
-            <div className="px-6 py-4 flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold">Dashboard</h1>
-                <p className="text-sm text-muted-foreground">
-                  Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'User'}!
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={() => navigate('/search')}>
-                  <Search className="w-4 h-4 mr-2" />
-                  Book Trip
-                </Button>
-              </div>
+      <DashboardLayout>
+        {/* Top Bar */}
+        <header className="bg-card border-b border-border sticky top-0 z-10">
+          <div className="px-6 py-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">
+                Welcome back, {profile?.full_name || user?.email?.split('@')[0] || 'User'}!
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={() => navigate('/search')}>
+                <Search className="w-4 h-4 mr-2" />
+                Book Trip
+              </Button>
             </div>
           </header>
 
@@ -430,10 +310,9 @@ const PassengerDashboard = () => {
               )}
             </div>
           </div>
-        </main>
-      </div>
-    </ProtectedRoute>
-  );
-};
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  };
 
 export default PassengerDashboard;

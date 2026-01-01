@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, Users, ArrowRight, X, Loader2, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import DashboardLayout from '@/components/DashboardLayout';
 import { useBookings, useCancelBooking } from '@/hooks/use-bookings';
 import { formatPrice } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
@@ -53,24 +52,22 @@ const MyBookings = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-        <Footer />
-      </div>
+      <ProtectedRoute>
+        <DashboardLayout>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
     );
   }
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <Header />
-
-        <div className="container mx-auto px-4 py-12 pt-24">
+      <DashboardLayout>
+        <div className="p-6">
           <div className="mb-8">
-            <h1 className="font-display text-4xl font-bold mb-2">My Bookings</h1>
+            <h1 className="text-2xl font-bold mb-2">My Bookings</h1>
             <p className="text-muted-foreground">
               View and manage your bus bookings
             </p>
@@ -243,8 +240,6 @@ const MyBookings = () => {
             </div>
           )}
         </div>
-
-        <Footer />
 
         {/* Cancel Confirmation Dialog */}
         <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
