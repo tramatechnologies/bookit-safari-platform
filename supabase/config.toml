@@ -70,7 +70,13 @@ enabled = true
 # in emails.
 site_url = "https://bookitsafari.com"
 # A list of *exact* URLs that auth providers are permitted to redirect to.
-additional_redirect_urls = ["https://bookitsafari.com"]
+additional_redirect_urls = [
+  "https://bookitsafari.com",
+  "https://bookitsafari.com/auth/verify",
+  "https://bookitsafari.com/auth/verify?redirect=/dashboard",
+  "https://bookitsafari.com/auth/callback",
+  "https://bookitsafari.com/auth/reset"
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # If disabled, the refresh token will never expire.

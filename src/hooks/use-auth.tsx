@@ -61,6 +61,11 @@ export const useAuth = () => {
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    // Use production URL for email redirects, fallback to current origin for local dev
+    const redirectUrl = import.meta.env.PROD 
+      ? 'https://bookitsafari.com/auth/verify?redirect=/dashboard'
+      : `${window.location.origin}/auth/verify?redirect=/dashboard`;
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -68,7 +73,7 @@ export const useAuth = () => {
         data: {
           full_name: fullName,
         },
-        emailRedirectTo: `${window.location.origin}/auth/verify?redirect=/dashboard`,
+        emailRedirectTo: redirectUrl,
       },
     });
 
