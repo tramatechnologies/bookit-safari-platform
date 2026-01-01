@@ -87,8 +87,13 @@ export const useAuth = () => {
   };
 
   const resetPassword = async (email: string) => {
+    // Use production URL for email redirects, fallback to current origin for local dev
+    const redirectUrl = import.meta.env.PROD 
+      ? 'https://bookitsafari.com/auth/reset'
+      : `${window.location.origin}/auth/reset`;
+    
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset`,
+      redirectTo: redirectUrl,
     });
     if (error) throw error;
   };
