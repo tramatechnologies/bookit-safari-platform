@@ -55,13 +55,10 @@ const Booking = () => {
   const totalSeats = schedule?.bus?.total_seats || 0;
   const pricePerSeat = Number(schedule?.price_tzs) || 0;
 
-  // Convert seat IDs to seat numbers for booking (calculate directly from IDs to avoid dependency issues)
-  // Use JSON.stringify to create a stable dependency for the array
-  const selectedSeatNumbers = useMemo(() => {
-    return selectedSeatIds
-      .map(id => getSeatNumberFromId(id, seatLayoutType, totalSeats))
-      .filter(n => n > 0);
-  }, [JSON.stringify(selectedSeatIds), seatLayoutType, totalSeats]);
+  // Convert seat IDs to seat numbers for booking (calculate directly - no memoization to avoid dependency issues)
+  const selectedSeatNumbers = selectedSeatIds
+    .map(id => getSeatNumberFromId(id, seatLayoutType, totalSeats))
+    .filter(n => n > 0);
 
   const totalPrice = selectedSeatNumbers.length * pricePerSeat;
 
