@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Bus } from 'lucide-react';
 
 export type SeatLayoutType = 'layout1' | 'layout2';

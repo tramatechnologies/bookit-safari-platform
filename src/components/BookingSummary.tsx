@@ -1,3 +1,4 @@
+import React from 'react';
 import { Calendar, Clock, MapPin, Users, CreditCard, User, Phone, Mail, Bus } from 'lucide-react';
 import { formatPrice } from '@/lib/constants';
 
@@ -15,7 +16,6 @@ interface BookingSummaryProps {
       duration_hours?: number | null;
     } | null;
     bus?: {
-      bus_number: string;
       plate_number?: string;
       bus_type?: string | null;
       amenities?: string[] | null;

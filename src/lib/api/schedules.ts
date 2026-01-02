@@ -19,7 +19,6 @@ export interface ScheduleWithDetails extends Schedule {
   } | null;
   bus: {
     id: string;
-    bus_number: string;
     plate_number: string;
     bus_type: string | null;
     total_seats: number;
@@ -113,11 +112,11 @@ export const schedulesApi = {
         } : null,
         bus: bus ? {
           id: bus.id,
-          bus_number: bus.bus_number,
           plate_number: bus.plate_number,
           bus_type: bus.bus_type,
           total_seats: bus.total_seats,
           amenities: bus.amenities,
+          seat_layout: bus.seat_layout || null,
         } : null,
       } as ScheduleWithDetails;
     });
@@ -144,7 +143,7 @@ export const schedulesApi = {
       
       const approvedOperatorIds = operators
         .filter((op) => op.status === 'approved')
-        .map((op) => op.id) || [];
+        .map((op) => op.id);
       
       // Filter to only include schedules from approved operators
       results = results.filter((schedule) => {
@@ -166,6 +165,12 @@ export const schedulesApi = {
               status: operator.status,
               logo_url: operator.logo_url || null,
             } : null,
+          } : null,
+          operator: operator ? {
+            id: operator.id,
+            company_name: operator.company_name,
+            status: operator.status,
+            logo_url: operator.logo_url || null,
           } : null,
         } as ScheduleWithDetails;
       });
@@ -320,9 +325,19 @@ export const schedulesApi = {
           id: operator.id,
           company_name: operator.company_name,
           status: operator.status,
+          logo_url: operator.logo_url || null,
         } : null,
       },
-      bus,
+      bus: bus ? {
+        ...bus,
+        seat_layout: bus.seat_layout || null,
+      } : null,
+      operator: operator ? {
+        id: operator.id,
+        company_name: operator.company_name,
+        status: operator.status,
+        logo_url: operator.logo_url || null,
+      } : null,
     } as ScheduleWithDetails;
   },
 

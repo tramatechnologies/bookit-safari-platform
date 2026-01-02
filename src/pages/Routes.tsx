@@ -25,11 +25,9 @@ const Routes = () => {
   ) || [];
 
   const { data: schedules, isLoading } = useSearchSchedules({
-    departureRegionId: darEsSalaamId || '',
-    destinationRegionId: '',
+    fromRegionId: darEsSalaamId || undefined,
+    toRegionId: undefined,
     date: format(tomorrow, 'yyyy-MM-dd'),
-  }, {
-    enabled: !!darEsSalaamId,
   });
 
   const filteredRoutes = schedules?.filter(schedule => {

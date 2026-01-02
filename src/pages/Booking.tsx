@@ -49,6 +49,10 @@ const Booking = () => {
   // Store seat numbers along with IDs
   const [seatIdToNumberMap, setSeatIdToNumberMap] = useState<Map<string, number>>(new Map());
 
+  // Define these before useMemo to avoid initialization order issues
+  const totalSeats = schedule?.bus?.total_seats || 0;
+  const pricePerSeat = Number(schedule?.price_tzs) || 0;
+
   // Convert seat IDs to seat numbers for booking
   const selectedSeatNumbers = useMemo(() => {
     return selectedSeatIds
@@ -56,8 +60,6 @@ const Booking = () => {
       .filter(n => n > 0);
   }, [selectedSeatIds, seatIdToNumberMap, seatLayoutType, totalSeats]);
 
-  const totalSeats = schedule?.bus?.total_seats || 0;
-  const pricePerSeat = Number(schedule?.price_tzs) || 0;
   const totalPrice = selectedSeatNumbers.length * pricePerSeat;
 
   // Get terminal options for boarding and drop-off
