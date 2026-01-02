@@ -75,7 +75,7 @@ const Booking = () => {
     setSelectedSeatIds((prevIds) => {
       if (prevIds.includes(seatId)) {
         // Deselect seat
-        const newIds = prevIds.filter((id) => id !== seatId);
+        const newIds = [...prevIds.filter((id) => id !== seatId)];
         // Remove passenger info for deselected seat
         setPassengers((prev) => {
           const newPassengers = { ...prev };
@@ -84,6 +84,10 @@ const Booking = () => {
         });
         return newIds;
       } else {
+        // Prevent duplicate seat selection
+        if (prevIds.includes(seatId)) {
+          return prevIds;
+        }
         if (prevIds.length < numberOfPassengers) {
           // Initialize passenger info for new seat
           setPassengers((prev) => {
@@ -108,7 +112,7 @@ const Booking = () => {
             description: `You can only select ${numberOfPassengers} seat${numberOfPassengers > 1 ? 's' : ''} for ${numberOfPassengers} passenger${numberOfPassengers > 1 ? 's' : ''}.`,
             variant: 'destructive',
           });
-          return prevIds;
+          return [...prevIds];
         }
       }
     });
@@ -420,9 +424,9 @@ const Booking = () => {
                   {/* Operator Info */}
                   {schedule.route?.operator && (
                     <div className="flex items-center gap-3 pb-4 border-b border-border">
-                      {schedule.route.operator.logo_url ? (
+                      {(schedule.route.operator as any).logo_url ? (
                         <img
-                          src={schedule.route.operator.logo_url}
+                          src={(schedule.route.operator as any).logo_url}
                           alt={schedule.route.operator.company_name || 'Operator logo'}
                           className="w-12 h-12 rounded-lg object-cover border border-border"
                         />
@@ -652,9 +656,9 @@ const Booking = () => {
                     Please provide details for each passenger. The first passenger's contact information will be used for booking confirmation.
                   </p>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    {selectedSeatIds.map((seatId, index) => (
+                    {selectedSeatIds.filter((seatId, index, self) => self.indexOf(seatId) === index).map((seatId, index) => (
                       <PassengerForm
-                        key={seatId}
+                        key={`${seatId}-${index}`}
                         passengerNumber={index + 1}
                         seatId={seatId}
                         passenger={passengers[seatId] || {
@@ -698,7 +702,7 @@ const Booking = () => {
             <div className="lg:col-span-1">
               <div className="sticky top-24">
                 <BookingSummary
-                  schedule={schedule}
+                  schedule={schedule as any}
                   selectedSeats={selectedSeatIds}
                   passengerInfo={passengerInfo}
                   boardingPoint={boardingPoint}
