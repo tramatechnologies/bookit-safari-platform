@@ -1,15 +1,8 @@
 {
+  "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/sitemap.xml",
-      "destination": "/sitemap.xml"
-    },
-    {
-      "source": "/robots.txt",
-      "destination": "/robots.txt"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.(xml|txt|ico|png|jpg|jpeg|gif|svg|css|js|json|woff|woff2|ttf|eot)$).*)",
       "destination": "/index.html"
     }
   ],
