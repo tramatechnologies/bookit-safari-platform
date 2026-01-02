@@ -25,6 +25,13 @@ export interface BookingWithSchedule extends Booking {
       amenities: string[] | null;
     } | null;
   } | null;
+  payments?: Array<{
+    id: string;
+    status: 'pending' | 'completed' | 'failed' | 'refunded';
+    amount_tzs: number;
+    payment_method: string;
+    paid_at: string | null;
+  }>;
 }
 
 export const bookingsApi = {
@@ -45,7 +52,11 @@ export const bookingsApi = {
             departure_region:regions!routes_departure_region_id_fkey(name, code),
             destination_region:regions!routes_destination_region_id_fkey(name, code),
             departure_terminal,
-            arrival_terminal
+            arrival_terminal,
+            operator:bus_operators(
+              company_name,
+              logo_url
+            )
           ),
           bus:buses(
             id,
@@ -54,6 +65,13 @@ export const bookingsApi = {
             bus_type,
             amenities
           )
+        ),
+        payments(
+          id,
+          status,
+          amount_tzs,
+          payment_method,
+          paid_at
         )
       `)
       .eq('user_id', userId)
@@ -80,7 +98,11 @@ export const bookingsApi = {
             departure_region:regions!routes_departure_region_id_fkey(name, code),
             destination_region:regions!routes_destination_region_id_fkey(name, code),
             departure_terminal,
-            arrival_terminal
+            arrival_terminal,
+            operator:bus_operators(
+              company_name,
+              logo_url
+            )
           ),
           bus:buses(
             id,
@@ -89,6 +111,13 @@ export const bookingsApi = {
             bus_type,
             amenities
           )
+        ),
+        payments(
+          id,
+          status,
+          amount_tzs,
+          payment_method,
+          paid_at
         )
       `)
       .eq('id', bookingId)

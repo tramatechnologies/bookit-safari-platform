@@ -80,7 +80,20 @@ const BookingConfirmation = () => {
   // Handle both field names for compatibility (database uses total_amount_tzs)
   const totalAmount = Number((booking as any).total_price_tzs || (booking as any).total_amount_tzs || 0);
 
+  // Check if payment is completed
+  const payment = booking.payments?.[0];
+  const isPaymentCompleted = payment?.status === 'completed';
+  const hasPayment = booking.payments && booking.payments.length > 0;
+
   const handleDownloadTicket = async () => {
+    if (!isPaymentCompleted) {
+      toast({
+        title: 'Payment Required',
+        description: 'Please complete payment before downloading your ticket.',
+        variant: 'destructive',
+      });
+      return;
+    }
     if (!booking || !schedule) return;
 
     setIsGeneratingTicket(true);
@@ -335,12 +348,18 @@ const BookingConfirmation = () => {
               variant="ghost" 
               className="flex-1"
               onClick={handleDownloadTicket}
-              disabled={isGeneratingTicket}
+              disabled={isGeneratingTicket || !isPaymentCompleted}
+              title={!hasPayment ? 'Payment pending' : !isPaymentCompleted ? 'Payment not completed' : 'Download your e-ticket'}
             >
               {isGeneratingTicket ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Generating...
+                </>
+              ) : !isPaymentCompleted ? (
+                <>
+                  <Download className="w-4 h-4 mr-2 opacity-50" />
+                  Payment Required
                 </>
               ) : (
                 <>

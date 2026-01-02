@@ -57,6 +57,19 @@ const MyBookings = () => {
   const handleDownloadTicket = async (booking: any) => {
     if (!booking || !booking.schedule) return;
 
+    // Check if payment is completed
+    const payment = booking.payments?.[0];
+    const isPaymentCompleted = payment?.status === 'completed';
+
+    if (!isPaymentCompleted) {
+      toast({
+        title: 'Payment Required',
+        description: 'Please complete payment before downloading your ticket.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setGeneratingTicketId(booking.id);
     try {
       const totalAmount = Number(booking.total_price_tzs || booking.total_amount_tzs || 0);
@@ -294,24 +307,38 @@ const MyBookings = () => {
                                 View Details
                               </Link>
                             </Button>
-                            <Button
-                              variant="teal-outline"
-                              size="sm"
-                              onClick={() => handleDownloadTicket(booking)}
-                              disabled={generatingTicketId === booking.id}
-                            >
-                              {generatingTicketId === booking.id ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Generating...
-                                </>
-                              ) : (
-                                <>
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Download Ticket
-                                </>
-                              )}
-                            </Button>
+                            {(() => {
+                              const payment = booking.payments?.[0];
+                              const isPaymentCompleted = payment?.status === 'completed';
+                              const hasPayment = booking.payments && booking.payments.length > 0;
+                              
+                              return (
+                                <Button
+                                  variant="teal-outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadTicket(booking)}
+                                  disabled={generatingTicketId === booking.id || !isPaymentCompleted}
+                                  title={!hasPayment ? 'Payment pending' : !isPaymentCompleted ? 'Payment not completed' : 'Download your e-ticket'}
+                                >
+                                  {generatingTicketId === booking.id ? (
+                                    <>
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                      Generating...
+                                    </>
+                                  ) : !isPaymentCompleted ? (
+                                    <>
+                                      <Download className="w-4 h-4 mr-2 opacity-50" />
+                                      Payment Required
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Download className="w-4 h-4 mr-2" />
+                                      Download Ticket
+                                    </>
+                                  )}
+                                </Button>
+                              );
+                            })()}
                           </>
                         )}
                         {canCancel && (
