@@ -93,8 +93,8 @@ const MyBookings = () => {
             <div className="space-y-4">
               {bookings.map((booking) => {
                 const schedule = booking.schedule;
-                // Handle both field names for compatibility (database uses total_amount_tzs)
-                const totalAmount = Number((booking as any).total_price_tzs || (booking as any).total_amount_tzs || 0);
+                // Use total_price_tzs (correct column name)
+                const totalAmount = Number((booking as any).total_price_tzs || 0);
                 const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
 
                 return (

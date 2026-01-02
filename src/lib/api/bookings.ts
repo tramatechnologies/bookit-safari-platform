@@ -50,6 +50,7 @@ export const bookingsApi = {
           bus:buses(
             id,
             bus_number,
+            plate_number,
             bus_type,
             amenities
           )
@@ -84,6 +85,7 @@ export const bookingsApi = {
           bus:buses(
             id,
             bus_number,
+            plate_number,
             bus_type,
             amenities
           )

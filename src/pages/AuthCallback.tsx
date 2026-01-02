@@ -30,7 +30,7 @@ const AuthCallback = () => {
             const { data: profile, error: profileError } = await supabase
               .from('profiles')
               .select('*')
-              .eq('user_id', session.user.id)
+              .eq('id', session.user.id)
               .single();
 
             // If profile doesn't exist, create it with Google data
@@ -46,7 +46,7 @@ const AuthCallback = () => {
               const { error: createError } = await supabase
                 .from('profiles')
                 .insert({
-                  user_id: session.user.id,
+                  id: session.user.id,
                   full_name: fullName,
                   avatar_url: avatarUrl,
                 });
@@ -65,7 +65,7 @@ const AuthCallback = () => {
                   full_name: session.user.user_metadata.name,
                   avatar_url: session.user.user_metadata.picture || profile.avatar_url,
                 })
-                .eq('user_id', session.user.id);
+                .eq('id', session.user.id);
             }
 
             // Check if email is verified (Google OAuth emails are pre-verified)
