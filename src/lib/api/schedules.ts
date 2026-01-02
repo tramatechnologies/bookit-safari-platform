@@ -248,17 +248,15 @@ export const schedulesApi = {
 
   // Get schedule by ID
   async getScheduleById(scheduleId: string): Promise<ScheduleWithDetails | null> {
-    // Use database function to get schedule - fetch all and filter by ID
-    const { data: schedulesData, error: scheduleError } = await supabase.rpc('get_active_schedules', {
-      p_departure_date: '1900-01-01', // Get all schedules, we'll filter by ID
-      p_min_price: null,
-      p_max_price: null,
+    // Use database function to get schedule by ID
+    const { data: scheduleData, error: scheduleError } = await supabase.rpc('get_schedule_by_id', {
+      p_schedule_id: scheduleId,
     });
 
     if (scheduleError) throw scheduleError;
     
-    // Find the specific schedule
-    const schedule = schedulesData?.find((s: any) => s.id === scheduleId);
+    // Get the schedule (should be single result)
+    const schedule = scheduleData?.[0];
     if (!schedule) return null;
 
     // Fetch route, bus, regions, and operator separately
