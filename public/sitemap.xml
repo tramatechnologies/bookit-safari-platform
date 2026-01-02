@@ -6,7 +6,7 @@
   
   <!-- Homepage -->
   <url>
-    <loc>https://bookitsafari.com</loc>
+    <loc>https://www.bookitsafari.com</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
@@ -14,7 +14,7 @@
 
   <!-- Authentication Pages -->
   <url>
-    <loc>https://bookitsafari.com/auth</loc>
+    <loc>https://www.bookitsafari.com/auth</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -22,13 +22,13 @@
 
   <!-- Search & Booking -->
   <url>
-    <loc>https://bookitsafari.com/search</loc>
+    <loc>https://www.bookitsafari.com/search</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://bookitsafari.com/routes</loc>
+    <loc>https://www.bookitsafari.com/routes</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
@@ -36,19 +36,19 @@
 
   <!-- User Pages (Public routes, auth required for access) -->
   <url>
-    <loc>https://bookitsafari.com/dashboard</loc>
+    <loc>https://www.bookitsafari.com/dashboard</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://bookitsafari.com/bookings</loc>
+    <loc>https://www.bookitsafari.com/bookings</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://bookitsafari.com/profile</loc>
+    <loc>https://www.bookitsafari.com/profile</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -56,13 +56,13 @@
 
   <!-- Operator Pages -->
   <url>
-    <loc>https://bookitsafari.com/operators</loc>
+    <loc>https://www.bookitsafari.com/operators</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://bookitsafari.com/operator/register</loc>
+    <loc>https://www.bookitsafari.com/operator/register</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -70,25 +70,25 @@
 
   <!-- Information Pages -->
   <url>
-    <loc>https://bookitsafari.com/about</loc>
+    <loc>https://www.bookitsafari.com/about</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://bookitsafari.com/help</loc>
+    <loc>https://www.bookitsafari.com/help</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://bookitsafari.com/partner</loc>
+    <loc>https://www.bookitsafari.com/partner</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://bookitsafari.com/advertise</loc>
+    <loc>https://www.bookitsafari.com/advertise</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -96,13 +96,13 @@
 
   <!-- Legal Pages -->
   <url>
-    <loc>https://bookitsafari.com/privacy</loc>
+    <loc>https://www.bookitsafari.com/privacy</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://bookitsafari.com/terms</loc>
+    <loc>https://www.bookitsafari.com/terms</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
