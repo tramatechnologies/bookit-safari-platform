@@ -34,11 +34,17 @@ const OperatorBuses = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBus, setEditingBus] = useState<Bus | null>(null);
+  // Seat counts per layout type
+  const LAYOUT_SEAT_COUNTS: Record<SeatLayoutType, number> = {
+    layout1: 53, // 2-2 with door gap, 5 back seats
+    layout2: 57, // 2-2 no gap, 5 back seats
+  };
+
   const [formData, setFormData] = useState({
     bus_number: '',
     plate_number: '',
     bus_type: '',
-    total_seats: 45,
+    total_seats: 53,
     amenities: [] as string[],
     seat_layout: 'layout1' as SeatLayoutType,
   });
@@ -162,7 +168,7 @@ const OperatorBuses = () => {
       bus_number: '',
       plate_number: '',
       bus_type: '',
-      total_seats: 45,
+      total_seats: 53,
       amenities: [],
       seat_layout: 'layout1',
     });
@@ -383,12 +389,14 @@ const OperatorBuses = () => {
                   <Label htmlFor="seat_layout">Seat Layout *</Label>
                   <Select
                     value={formData.seat_layout}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const layout = value as SeatLayoutType;
                       setFormData({
                         ...formData,
-                        seat_layout: value as SeatLayoutType,
-                      })
-                    }
+                        seat_layout: layout,
+                        total_seats: LAYOUT_SEAT_COUNTS[layout],
+                      });
+                    }}
                     required
                   >
                     <SelectTrigger id="seat_layout">
@@ -396,13 +404,16 @@ const OperatorBuses = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="layout1">
-                        Layout 1 (2-2 configuration, 5 back seats)
+                        Layout 1 - 53 seats (2-2 with door gap)
                       </SelectItem>
                       <SelectItem value="layout2">
-                        Layout 2 (2-2-2-2 configuration, 5 back seats)
+                        Layout 2 - 57 seats (2-2 full rows)
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Selected layout has {LAYOUT_SEAT_COUNTS[formData.seat_layout]} seats
+                  </p>
                 </div>
 
                 <AmenitiesSelector
