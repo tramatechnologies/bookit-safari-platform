@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { paymentSchema } from '@/lib/validations/payment';
 import { z } from 'zod';
 import { validateUuid } from '@/lib/validations/uuid';
+import { formatPaymentError } from '@/lib/utils/error-messages';
 
 const Payment = () => {
   const { bookingId: rawBookingId } = useParams<{ bookingId: string }>();
@@ -32,12 +33,76 @@ const Payment = () => {
   const [processing, setProcessing] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [shouldPoll, setShouldPoll] = useState(false);
 
   useEffect(() => {
     if (user?.user_metadata?.phone) {
       setPhoneNumber(user.user_metadata.phone);
     }
   }, [user]);
+
+  // Poll for payment status when shouldPoll is true
+  useEffect(() => {
+    if (!shouldPoll || !booking || paymentStatus === 'success' || paymentStatus === 'failed') {
+      return;
+    }
+
+    const pollInterval = setInterval(async () => {
+      try {
+        // Check booking status to see if payment was completed
+        const { data: updatedBooking } = await supabase
+          .from('bookings')
+          .select('status, payments(status)')
+          .eq('id', booking.id)
+          .single();
+
+        if (updatedBooking?.status === 'confirmed') {
+          setShouldPoll(false);
+          setPaymentStatus('success');
+          toast({
+            title: 'Payment successful!',
+            description: 'Your booking has been confirmed.',
+          });
+
+          // Redirect to confirmation page after 2 seconds
+          setTimeout(() => {
+            navigate(`/booking/${booking.id}/confirmation`);
+          }, 2000);
+        } else if (updatedBooking?.payments?.[0]?.status === 'failed') {
+          setShouldPoll(false);
+          setPaymentStatus('failed');
+          toast({
+            title: 'Payment failed',
+            description: 'The payment was not completed. Please try again.',
+            variant: 'destructive',
+          });
+          setProcessing(false);
+        }
+      } catch (error: any) {
+        if (import.meta.env.DEV) {
+          console.error('Payment status check error:', error);
+        }
+      }
+    }, 3000); // Poll every 3 seconds
+
+    // Stop polling after 5 minutes
+    const timeoutId = setTimeout(() => {
+      setShouldPoll(false);
+      if (paymentStatus === 'processing') {
+        toast({
+          title: 'Payment pending',
+          description: 'Your payment is still being processed. You will receive a confirmation email once completed.',
+        });
+        setProcessing(false);
+      }
+    }, 5 * 60 * 1000);
+
+    // Cleanup function
+    return () => {
+      clearInterval(pollInterval);
+      clearTimeout(timeoutId);
+    };
+  }, [shouldPoll, booking, paymentStatus, navigate, toast]);
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,62 +161,15 @@ const Payment = () => {
         description: paymentData.message || 'Please check your phone and enter your PIN to complete the payment.',
       });
 
-      // Poll for payment status (ClickPesa webhook will update, but we poll as backup)
-      const pollInterval = setInterval(async () => {
-        try {
-          // Check booking status to see if payment was completed
-          const { data: updatedBooking } = await supabase
-            .from('bookings')
-            .select('status, payments(status)')
-            .eq('id', booking.id)
-            .single();
-
-          if (updatedBooking?.status === 'confirmed') {
-            clearInterval(pollInterval);
-            setPaymentStatus('success');
-            toast({
-              title: 'Payment successful!',
-              description: 'Your booking has been confirmed.',
-            });
-
-            // Redirect to confirmation page after 2 seconds
-            setTimeout(() => {
-              navigate(`/booking/${booking.id}/confirmation`);
-            }, 2000);
-          } else if (updatedBooking?.payments?.[0]?.status === 'failed') {
-            clearInterval(pollInterval);
-            setPaymentStatus('failed');
-            toast({
-              title: 'Payment failed',
-              description: 'The payment was not completed. Please try again.',
-              variant: 'destructive',
-            });
-            setProcessing(false);
-          }
-        } catch (error: any) {
-          if (import.meta.env.DEV) {
-            console.error('Payment status check error:', error);
-          }
-        }
-      }, 3000); // Poll every 3 seconds
-
-      // Stop polling after 5 minutes
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (paymentStatus === 'processing') {
-          toast({
-            title: 'Payment pending',
-            description: 'Your payment is still being processed. You will receive a confirmation email once completed.',
-          });
-          setProcessing(false);
-        }
-      }, 5 * 60 * 1000);
+      // Start polling for payment status (useEffect will handle cleanup)
+      setShouldPoll(true);
     } catch (error: any) {
       setPaymentStatus('failed');
       setProcessing(false);
+      const formattedError = formatPaymentError(error);
       toast({
-        title: 'Payment error',
-        description: error.message || 'Failed to initiate payment. Please try again.',
+        title: formattedError.title,
+        description: formattedError.description,
         variant: 'destructive',
       });
     }

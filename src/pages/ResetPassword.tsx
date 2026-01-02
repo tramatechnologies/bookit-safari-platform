@@ -116,9 +116,10 @@ const ResetPassword = () => {
         navigate('/auth');
       }, 2000);
     } catch (error: any) {
+      const formattedError = formatAuthError(error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to update password. Please try again.',
+        title: formattedError.title,
+        description: formattedError.description,
         variant: 'destructive',
       });
     } finally {

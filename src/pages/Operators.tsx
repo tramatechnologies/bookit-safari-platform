@@ -17,6 +17,7 @@ const Operators = () => {
       const { data, error } = await supabase
         .from('bus_operators')
         .select('*')
+        .eq('status', 'approved')
         .order('company_name', { ascending: true });
       
       if (error) throw error;
@@ -26,7 +27,7 @@ const Operators = () => {
 
   const filteredOperators = operators?.filter(op =>
     op.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    op.contact_email?.toLowerCase().includes(searchTerm.toLowerCase())
+    op.company_email?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   return (
@@ -99,19 +100,19 @@ const Operators = () => {
                     )}
 
                     <div className="space-y-2 mb-4">
-                      {operator.contact_phone && (
+                      {operator.company_phone && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Phone className="w-4 h-4" />
-                          <a href={`tel:${operator.contact_phone}`} className="hover:text-teal transition-colors">
-                            {operator.contact_phone}
+                          <a href={`tel:${operator.company_phone}`} className="hover:text-teal transition-colors">
+                            {operator.company_phone}
                           </a>
                         </div>
                       )}
-                      {operator.contact_email && (
+                      {operator.company_email && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Mail className="w-4 h-4" />
-                          <a href={`mailto:${operator.contact_email}`} className="hover:text-teal transition-colors">
-                            {operator.contact_email}
+                          <a href={`mailto:${operator.company_email}`} className="hover:text-teal transition-colors">
+                            {operator.company_email}
                           </a>
                         </div>
                       )}

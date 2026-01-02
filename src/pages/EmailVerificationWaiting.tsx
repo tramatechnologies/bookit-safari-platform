@@ -4,10 +4,13 @@ import { Mail, CheckCircle, Loader2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { formatVerificationError } from '@/lib/utils/error-messages';
 
 const EmailVerificationWaiting = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [checking, setChecking] = useState(false);
   const [email, setEmail] = useState('');
 
@@ -60,16 +63,31 @@ const EmailVerificationWaiting = () => {
     if (!user?.email) return;
     
     try {
+      const redirectUrl = import.meta.env.PROD 
+        ? 'https://bookitsafari.com/auth/verify?redirect=/dashboard'
+        : `${window.location.origin}/auth/verify?redirect=/dashboard`;
+      
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: user.email,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
       });
 
       if (error) throw error;
 
-      alert('Verification email sent! Please check your inbox.');
+      toast({
+        title: 'Email Sent!',
+        description: 'Verification email sent! Please check your inbox and spam folder.',
+      });
     } catch (error: any) {
-      alert(error.message || 'Failed to resend email. Please try again.');
+      const formattedError = formatVerificationError(error);
+      toast({
+        title: formattedError.title,
+        description: formattedError.description,
+        variant: 'destructive',
+      });
     }
   };
 

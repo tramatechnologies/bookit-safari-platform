@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { z } from 'zod';
+import { formatAuthError } from '@/lib/utils/error-messages';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -45,9 +46,10 @@ const ForgotPassword = () => {
         description: 'Please check your email for instructions to reset your password.',
       });
     } catch (error: any) {
+      const formattedError = formatAuthError(error);
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to send password reset email. Please try again.',
+        title: formattedError.title,
+        description: formattedError.description,
         variant: 'destructive',
       });
     } finally {

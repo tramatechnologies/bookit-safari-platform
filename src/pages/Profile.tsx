@@ -108,9 +108,10 @@ const Profile = () => {
         description: 'Your profile has been updated successfully.',
       });
     } catch (error: any) {
+      const formattedError = formatProfileError(error);
       toast({
-        title: 'Update failed',
-        description: error.message || 'Failed to update profile. Please try again.',
+        title: formattedError.title,
+        description: formattedError.description,
         variant: 'destructive',
       });
     } finally {

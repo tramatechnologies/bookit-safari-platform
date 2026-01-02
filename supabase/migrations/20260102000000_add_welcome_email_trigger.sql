@@ -21,7 +21,7 @@ BEGIN
   -- Check if welcome email was already sent
   SELECT welcome_email_sent INTO already_sent
   FROM public.profiles
-  WHERE user_id = _user_id;
+  WHERE id = _user_id;
   
   IF already_sent THEN
     RETURN;
@@ -42,7 +42,7 @@ BEGIN
     COALESCE(p.full_name, u.raw_user_meta_data->>'full_name', SPLIT_PART(u.email, '@', 1), 'Traveler')
   INTO user_email, user_full_name
   FROM auth.users u
-  LEFT JOIN public.profiles p ON p.user_id = u.id
+  LEFT JOIN public.profiles p ON p.id = u.id
   WHERE u.id = _user_id;
   
   IF user_email IS NULL THEN
@@ -54,7 +54,7 @@ BEGIN
   -- This prevents duplicate sends
   UPDATE public.profiles
   SET welcome_email_sent = TRUE
-  WHERE user_id = _user_id;
+  WHERE id = _user_id;
   
   -- The actual email sending will be handled by calling the send-welcome-email edge function
   -- This can be done via Supabase webhook or scheduled job
@@ -78,7 +78,7 @@ BEGIN
     -- The actual sending will be handled by Supabase webhook
     UPDATE public.profiles
     SET welcome_email_sent = FALSE
-    WHERE user_id = NEW.id;
+    WHERE id = NEW.id;
   END IF;
   
   RETURN NEW;

@@ -4,6 +4,7 @@ import { CheckCircle, XCircle, Mail, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
+import { formatVerificationError } from '@/lib/utils/error-messages';
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
@@ -28,8 +29,9 @@ const VerifyEmail = () => {
         // Handle errors from hash
         if (error) {
           if (mounted) {
-            setStatus('error');
-            setMessage(errorDescription || 'Verification failed. Please try again.');
+            const formattedError = formatVerificationError({ message: errorDescription || error });
+            setStatus(formattedError.type);
+            setMessage(formattedError.description);
           }
           return;
         }
@@ -62,13 +64,9 @@ const VerifyEmail = () => {
 
             if (verifyError) {
               if (mounted) {
-                if (verifyError.message.includes('expired') || verifyError.message.includes('invalid')) {
-                  setStatus('expired');
-                  setMessage('This verification link has expired or is invalid. Please request a new one.');
-                } else {
-                  setStatus('error');
-                  setMessage(verifyError.message || 'Failed to verify email. Please try again.');
-                }
+                const formattedError = formatVerificationError(verifyError);
+                setStatus(formattedError.type);
+                setMessage(formattedError.description);
               }
               return;
             }
@@ -84,8 +82,9 @@ const VerifyEmail = () => {
             }
           } catch (err: any) {
             if (mounted) {
-              setStatus('error');
-              setMessage(err.message || 'An error occurred during verification.');
+              const formattedError = formatVerificationError(err);
+              setStatus(formattedError.type);
+              setMessage(formattedError.description);
             }
             return;
           }
@@ -96,8 +95,9 @@ const VerifyEmail = () => {
 
         if (sessionError) {
           if (mounted) {
-            setStatus('error');
-            setMessage('Failed to check session. Please try again.');
+            const formattedError = formatVerificationError(sessionError);
+            setStatus(formattedError.type);
+            setMessage(formattedError.description);
           }
           return;
         }
@@ -133,13 +133,14 @@ const VerifyEmail = () => {
 
         // No valid verification found
         if (mounted) {
-          setStatus('error');
+          setStatus('expired');
           setMessage('Invalid verification link. Please check your email and try again, or request a new verification email.');
         }
       } catch (err: any) {
         if (mounted) {
-          setStatus('error');
-          setMessage(err.message || 'An unexpected error occurred. Please try again.');
+          const formattedError = formatVerificationError(err);
+          setStatus(formattedError.type);
+          setMessage(formattedError.description);
         }
       }
     };
@@ -288,13 +289,15 @@ const VerifyEmail = () => {
                         });
 
                         if (error) {
-                          setMessage(`Failed to resend email: ${error.message}`);
+                          const formattedError = formatVerificationError(error);
+                          setMessage(formattedError.description);
                         } else {
-                          setMessage('Verification email sent! Please check your inbox.');
+                          setMessage('Verification email sent! Please check your inbox and spam folder.');
                           setStatus('loading');
                         }
                       } catch (err: any) {
-                        setMessage(`Failed to resend email: ${err.message}`);
+                        const formattedError = formatVerificationError(err);
+                        setMessage(formattedError.description);
                       }
                     }}
                   >

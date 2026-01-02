@@ -7,6 +7,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { useBookings, useCancelBooking } from '@/hooks/use-bookings';
 import { formatPrice } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
+import { formatApiError } from '@/lib/utils/error-messages';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,9 +43,10 @@ const MyBookings = () => {
       setCancelDialogOpen(false);
       setBookingToCancel(null);
     } catch (error: any) {
+      const formattedError = formatApiError(error);
       toast({
-        title: 'Cancellation failed',
-        description: error.message || 'Failed to cancel booking. Please try again.',
+        title: formattedError.title,
+        description: formattedError.description,
         variant: 'destructive',
       });
     }

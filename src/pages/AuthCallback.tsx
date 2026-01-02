@@ -92,8 +92,9 @@ const AuthCallback = () => {
         // Wait a bit for Supabase to process the callback
         setTimeout(checkSession, 1000);
       } catch (error: any) {
+        const formattedError = formatAuthError(error);
         setStatus('error');
-        setMessage(error.message || 'An error occurred during sign in.');
+        setMessage(formattedError.description);
       }
     };
 

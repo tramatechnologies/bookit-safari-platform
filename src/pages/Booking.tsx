@@ -131,9 +131,10 @@ const Booking = () => {
 
       navigate(`/booking/${booking.id}/payment`);
     } catch (error: any) {
+      const formattedError = formatBookingError(error);
       toast({
-        title: 'Booking failed',
-        description: error.message || 'Failed to create booking. Please try again.',
+        title: formattedError.title,
+        description: formattedError.description,
         variant: 'destructive',
       });
     }

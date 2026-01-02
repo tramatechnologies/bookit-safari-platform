@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { signInSchema, signUpSchema } from '@/lib/validations/auth';
+import { formatAuthError } from '@/lib/utils/error-messages';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -18,6 +19,7 @@ const Auth = () => {
   const [isRegister, setIsRegister] = useState(searchParams.get('mode') === 'register');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [justSignedUp, setJustSignedUp] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -30,6 +32,9 @@ const Auth = () => {
   // But don't redirect if we're on the auth page (let the form handler do it)
   // Only redirect if we're actually on /auth path (not during form submission)
   useEffect(() => {
+    // Skip if we just signed up (let the form handler redirect)
+    if (justSignedUp) return;
+    
     // Only run this effect when on /auth page and user state changes
     // Don't interfere with form submission redirects
     // Skip if we're currently loading (form submission in progress)
@@ -37,7 +42,7 @@ const Auth = () => {
       // Small delay to avoid race conditions with form submission
       const timer = setTimeout(() => {
         // Only redirect if we're still on /auth (not already navigating)
-        if (window.location.pathname === '/auth') {
+        if (window.location.pathname === '/auth' && !justSignedUp) {
           // Check if email is confirmed
           if (user.email_confirmed_at) {
             const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
@@ -51,7 +56,7 @@ const Auth = () => {
       
       return () => clearTimeout(timer);
     }
-  }, [user, navigate, location, loading]);
+  }, [user, navigate, location, loading, justSignedUp]);
 
   useEffect(() => {
     setIsRegister(searchParams.get('mode') === 'register');
@@ -106,6 +111,9 @@ const Auth = () => {
           throw signUpError;
         }
 
+        // Mark that we just signed up to prevent useEffect from interfering
+        setJustSignedUp(true);
+        
         // Set loading to false before navigation to prevent useEffect interference
         setLoading(false);
 
@@ -116,10 +124,12 @@ const Auth = () => {
         
         // Redirect to email verification waiting page immediately
         // Use replace: true to prevent back navigation
-        // Use setTimeout to ensure navigation happens after state updates
+        // Use a longer timeout to ensure all state updates are complete
         setTimeout(() => {
           navigate('/auth/verify-waiting', { replace: true });
-        }, 100);
+          // Reset the flag after navigation
+          setTimeout(() => setJustSignedUp(false), 1000);
+        }, 150);
       } else {
         // Validate with Zod
         const result = signInSchema.safeParse({
@@ -189,70 +199,18 @@ const Auth = () => {
       }
     } catch (error: any) {
       // Handle specific authentication errors with user-friendly messages
-      let errorTitle = 'Authentication Error';
-      let errorDescription = 'An error occurred. Please try again.';
+      const formattedError = formatAuthError(error, { action: isRegister ? 'signup' : 'signin' });
       let showSwitchMode = false;
 
-      if (error?.message) {
-        const errorMessage = error.message.toLowerCase();
-        const errorCode = error.status || error.code;
-
-        if (isRegister) {
-          // Signup errors
-          if (error.isExistingUser ||
-              errorMessage.includes('already registered') || 
-              errorMessage.includes('user already exists') ||
-              errorMessage.includes('email address is already in use') ||
-              errorMessage.includes('already exists') ||
-              errorCode === 422) {
-            errorTitle = 'Account Already Exists';
-            errorDescription = 'An account with this email already exists. Please sign in instead or reset your password if you\'ve forgotten it.';
-            showSwitchMode = true;
-          } else if (errorMessage.includes('password') && errorMessage.includes('weak')) {
-            errorTitle = 'Weak Password';
-            errorDescription = 'Password is too weak. Please use a stronger password with at least 8 characters.';
-          } else if (errorMessage.includes('email')) {
-            errorTitle = 'Invalid Email';
-            errorDescription = 'Please enter a valid email address.';
-          } else {
-            errorDescription = error.message;
-          }
-        } else {
-          // Signin errors
-          if (error.isDeletedAccount ||
-              errorMessage.includes('user not found') ||
-              errorMessage.includes('user does not exist') ||
-              errorMessage.includes('account not found') ||
-              errorMessage.includes('user has been deleted') ||
-              errorMessage.includes('account may have been deleted') ||
-              errorCode === 404) {
-            errorTitle = 'Account Not Found';
-            errorDescription = 'No account found with this email address. The account may have been deleted. Please sign up for a new account if you want to continue.';
-            showSwitchMode = true; // Suggest signing up
-          } else if (errorMessage.includes('invalid login credentials') ||
-              errorMessage.includes('invalid password') ||
-              errorMessage.includes('wrong password') ||
-              errorCode === 400) {
-            errorTitle = 'Invalid Credentials';
-            errorDescription = 'The email or password you entered is incorrect. Please try again or reset your password if you\'ve forgotten it.';
-          } else if (errorMessage.includes('email not confirmed') ||
-                     errorMessage.includes('email not verified')) {
-            errorTitle = 'Email Not Verified';
-            errorDescription = 'Please verify your email address before signing in. Check your inbox for the verification link.';
-          } else if (errorMessage.includes('too many requests') ||
-                     errorMessage.includes('rate limit')) {
-            errorTitle = 'Too Many Attempts';
-            errorDescription = 'Too many login attempts. Please wait a few minutes before trying again.';
-          } else if (errorMessage.includes('user is disabled') ||
-                     errorMessage.includes('account disabled') ||
-                     errorMessage.includes('account suspended')) {
-            errorTitle = 'Account Disabled';
-            errorDescription = 'Your account has been disabled. Please contact support for assistance.';
-          } else {
-            errorDescription = error.message;
-          }
-        }
+      // Determine if we should show switch mode option
+      if (formattedError.action === 'signin' && isRegister) {
+        showSwitchMode = true;
+      } else if (formattedError.action === 'signup' && !isRegister) {
+        showSwitchMode = true;
       }
+
+      const errorTitle = formattedError.title;
+      const errorDescription = formattedError.description;
 
       toast({
         title: errorTitle,
