@@ -183,7 +183,7 @@ const Booking = () => {
     const passengerErrors: Record<string, Record<string, string>> = {};
     let hasErrors = false;
 
-    selectedSeatIds.forEach((seatId) => {
+    Array.from(new Set(selectedSeatIds)).forEach((seatId) => {
       const passenger = passengers[seatId];
       const seatErrors: Record<string, string> = {};
 
@@ -207,11 +207,11 @@ const Booking = () => {
           seatErrors.age = 'Age is required for children (0-17 years)';
           hasErrors = true;
         }
-        if (selectedSeatIds[0] === seatId && (!passenger.phone || !passenger.phone.match(/^\+?[0-9]{10,15}$/))) {
+        if (uniqueSeatIds[0] === seatId && (!passenger.phone || !passenger.phone.match(/^\+?[0-9]{10,15}$/))) {
           seatErrors.phone = 'Please enter a valid phone number';
           hasErrors = true;
         }
-        if (selectedSeatIds[0] === seatId && passenger.email && !passenger.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        if (uniqueSeatIds[0] === seatId && passenger.email && !passenger.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
           seatErrors.email = 'Please enter a valid email address';
           hasErrors = true;
         }
@@ -233,8 +233,9 @@ const Booking = () => {
     }
 
     // Validate with Zod (using first passenger as primary contact)
-    const primaryPassenger = passengers[selectedSeatIds[0]];
-    const passengerList = selectedSeatIds.map((seatId) => {
+    const uniqueSeatIds = Array.from(new Set(selectedSeatIds));
+    const primaryPassenger = passengers[uniqueSeatIds[0]];
+    const passengerList = uniqueSeatIds.map((seatId) => {
       const p = passengers[seatId];
       return {
         name: p.name,
@@ -262,7 +263,7 @@ const Booking = () => {
           const path = err.path;
           if (path[0] === 'passengers' && path.length > 1 && typeof path[1] === 'number') {
             const seatIndex = path[1];
-            const seatId = selectedSeatIds[seatIndex];
+            const seatId = uniqueSeatIds[seatIndex];
             if (seatId) {
               if (!fieldErrors[seatId]) fieldErrors[seatId] = {};
               const field = path[2]?.toString() || 'name';
@@ -282,7 +283,7 @@ const Booking = () => {
 
     try {
       // Prepare passenger data
-      const passengerData = selectedSeatIds.map((seatId, index) => {
+      const passengerData = uniqueSeatIds.map((seatId, index) => {
         const passenger = passengers[seatId];
         return {
           seat_number: selectedSeatNumbers[index],
@@ -672,7 +673,7 @@ const Booking = () => {
                           email: index === 0 ? passengerInfo.email : undefined,
                         }}
                         onChange={(passenger) => handlePassengerChange(seatId, passenger)}
-                        canRemove={selectedSeatIds.length > 1 && index > 0}
+                        canRemove={Array.from(new Set(selectedSeatIds)).length > 1 && index > 0}
                         errors={errors[seatId] || {}}
                       />
                     ))}
