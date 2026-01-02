@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { MapPin, Calendar, Clock, ArrowRight, Filter, Wifi, Wind, Zap, Users, AlertCircle, Loader2, Bus } from 'lucide-react';
+import { MapPin, Calendar, Clock, ArrowRight, Filter, Wifi, Wind, Zap, Users, AlertCircle, Loader2, Bus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { formatPrice } from '@/lib/constants';
 import { useSearchSchedules } from '@/hooks/use-schedules';
 import { useRegions } from '@/hooks/use-regions';
+import { format } from 'date-fns';
 
 const amenityIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   wifi: Wifi,
@@ -15,23 +17,72 @@ const amenityIcons: Record<string, React.ComponentType<{ className?: string }>> 
 };
 
 const SearchResults = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const from = searchParams.get('from');
   const to = searchParams.get('to');
   const date = searchParams.get('date');
+  const [routeSearchTerm, setRouteSearchTerm] = useState('');
 
   const { data: regions = [] } = useRegions();
   const fromRegion = regions.find(r => r.id === from || r.code === from);
   const toRegion = regions.find(r => r.id === to || r.code === to);
 
+  // If no date provided, use tomorrow
+  const searchDate = date || format(new Date(Date.now() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+
   const { data: schedules = [], isLoading, error } = useSearchSchedules({
     fromRegionId: from || undefined,
     toRegionId: to || undefined,
-    date: date || undefined,
+    date: searchDate,
   });
 
   const [sortBy, setSortBy] = useState<'departure' | 'price' | 'duration'>('departure');
+
+  // Group schedules by route when no filters are provided
+  const routesMap = useMemo(() => {
+    if (from && to) return null; // Don't group if filters are applied
+    
+    const map = new Map<string, typeof schedules>();
+    schedules.forEach((schedule) => {
+      const routeId = schedule.route_id || 'unknown';
+      if (!map.has(routeId)) {
+        map.set(routeId, []);
+      }
+      map.get(routeId)!.push(schedule);
+    });
+    return map;
+  }, [schedules, from, to]);
+
+  const uniqueRoutes = useMemo(() => {
+    if (!routesMap) return [];
+    
+    return Array.from(routesMap.entries()).map(([routeId, routeSchedules]) => {
+      const firstSchedule = routeSchedules[0];
+      const route = firstSchedule.route;
+      return {
+        routeId,
+        departureRegion: route?.departure_region,
+        destinationRegion: route?.destination_region,
+        departureRegionId: route?.departure_region_id,
+        destinationRegionId: route?.destination_region_id,
+        busCount: routeSchedules.length,
+        minPrice: Math.min(...routeSchedules.map(s => Number(s.price_tzs))),
+        schedules: routeSchedules,
+      };
+    });
+  }, [routesMap]);
+
+  const filteredUniqueRoutes = useMemo(() => {
+    if (!routeSearchTerm) return uniqueRoutes;
+    
+    return uniqueRoutes.filter(route => {
+      const departure = route.departureRegion?.name || '';
+      const destination = route.destinationRegion?.name || '';
+      return departure.toLowerCase().includes(routeSearchTerm.toLowerCase()) ||
+             destination.toLowerCase().includes(routeSearchTerm.toLowerCase());
+    });
+  }, [uniqueRoutes, routeSearchTerm]);
 
   const sortedSchedules = useMemo(() => {
     return [...schedules].sort((a, b) => {
@@ -50,6 +101,14 @@ const SearchResults = () => {
     });
   }, [schedules, sortBy]);
 
+  const handleRouteSelect = (departureRegionId: string, destinationRegionId: string) => {
+    setSearchParams({
+      from: departureRegionId,
+      to: destinationRegionId,
+      date: searchDate,
+    });
+  };
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('en-TZ', {
@@ -59,6 +118,120 @@ const SearchResults = () => {
       day: 'numeric',
     });
   };
+
+  // Show route selection view when no filters are provided
+  if (!from || !to) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+
+        {/* Hero Section */}
+        <section className="pt-32 pb-16 bg-gradient-to-b from-teal/5 to-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
+                Choose Your Route
+              </h1>
+              <p className="text-lg text-muted-foreground mb-8">
+                Select a route to see available buses and book your trip.
+              </p>
+              
+              {/* Search */}
+              <div className="relative max-w-md mx-auto mb-8">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search routes..."
+                  value={routeSearchTerm}
+                  onChange={(e) => setRouteSearchTerm(e.target.value)}
+                  className="pl-12"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Routes Grid */}
+        <section className="py-12">
+          <div className="container mx-auto px-4">
+            {isLoading ? (
+              <div className="text-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading routes...</p>
+              </div>
+            ) : filteredUniqueRoutes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredUniqueRoutes.map((route) => (
+                  <div
+                    key={route.routeId}
+                    className="group bg-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-border/50 hover:-translate-y-1 cursor-pointer"
+                    onClick={() => handleRouteSelect(route.departureRegionId!, route.destinationRegionId!)}
+                  >
+                    <div className="p-6 bg-gradient-to-br from-teal/5 to-amber/5">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex-1">
+                          <p className="text-lg font-semibold text-foreground">
+                            {route.departureRegion?.name || 'N/A'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Departure</p>
+                        </div>
+                        <div className="px-4">
+                          <div className="w-12 h-12 rounded-full bg-amber/10 flex items-center justify-center group-hover:bg-amber group-hover:text-accent-foreground transition-colors">
+                            <ArrowRight className="w-5 h-5 text-amber group-hover:text-accent-foreground" />
+                          </div>
+                        </div>
+                        <div className="flex-1 text-right">
+                          <p className="text-lg font-semibold text-foreground">
+                            {route.destinationRegion?.name || 'N/A'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Arrival</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-6 border-t border-border/50">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Bus className="w-4 h-4" />
+                          <span className="text-sm">{route.busCount} {route.busCount === 1 ? 'bus' : 'buses'} available</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">From</p>
+                          <p className="text-xl font-bold text-teal">
+                            {formatPrice(route.minPrice)}
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="teal-outline" className="w-full" onClick={(e) => {
+                        e.stopPropagation();
+                        handleRouteSelect(route.departureRegionId!, route.destinationRegionId!);
+                      }}>
+                        View Buses
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20">
+                <MapPin className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">No routes found</h3>
+                <p className="text-muted-foreground mb-6">
+                  {routeSearchTerm ? 'Try a different search term' : 'Routes will appear here once operators add schedules'}
+                </p>
+                <Button variant="outline" onClick={() => navigate('/')}>
+                  Go Home
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,15 +250,22 @@ const SearchResults = () => {
               <div className="flex items-center gap-4 text-primary-foreground/70">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  <span>{formatDate(date)}</span>
+                  <span>{formatDate(date || searchDate)}</span>
                 </div>
                 <span>•</span>
                 <span>{schedules.length} buses available</span>
               </div>
             </div>
-            <Button variant="hero-outline" size="lg" onClick={() => navigate('/')} asChild>
-              <Link to="/">Modify Search</Link>
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="hero-outline" size="lg" onClick={() => {
+                setSearchParams({});
+              }}>
+                View All Routes
+              </Button>
+              <Button variant="hero-outline" size="lg" onClick={() => navigate('/')} asChild>
+                <Link to="/">Modify Search</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
