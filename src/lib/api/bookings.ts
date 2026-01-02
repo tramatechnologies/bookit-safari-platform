@@ -34,7 +34,7 @@ export interface BookingWithSchedule extends Booking {
     status: 'pending' | 'completed' | 'failed' | 'refunded';
     amount_tzs: number;
     payment_method: string;
-    paid_at: string | null;
+    completed_at: string | null;
   }>;
 }
 
@@ -74,7 +74,7 @@ export const bookingsApi = {
           status,
           amount_tzs,
           payment_method,
-          paid_at
+          completed_at
         )
       `)
       .eq('user_id', userId)
@@ -119,7 +119,7 @@ export const bookingsApi = {
           status,
           amount_tzs,
           payment_method,
-          paid_at
+          completed_at
         )
       `)
       .eq('id', bookingId)
