@@ -59,14 +59,32 @@ export const schedulesApi = {
     const busIds = [...new Set(schedules.map((s) => s.bus_id).filter(Boolean) as string[])];
 
     // Fetch routes separately using database function to bypass RLS issues
-    const { data: routes } = await supabase.rpc('get_routes_by_ids', {
-      p_route_ids: routeIds,
-    });
+    let routes: any[] = [];
+    if (routeIds.length > 0) {
+      const { data: routesData, error: routesError } = await supabase.rpc('get_routes_by_ids', {
+        p_route_ids: routeIds,
+      });
+      if (routesError) {
+        console.error('Error fetching routes:', routesError);
+        // Fallback to empty array
+      } else {
+        routes = routesData || [];
+      }
+    }
 
     // Fetch buses separately using database function to bypass RLS issues
-    const { data: buses } = await supabase.rpc('get_buses_by_ids', {
-      p_bus_ids: busIds,
-    });
+    let buses: any[] = [];
+    if (busIds.length > 0) {
+      const { data: busesData, error: busesError } = await supabase.rpc('get_buses_by_ids', {
+        p_bus_ids: busIds,
+      });
+      if (busesError) {
+        console.error('Error fetching buses:', busesError);
+        // Fallback to empty array
+      } else {
+        buses = busesData || [];
+      }
+    }
 
     // Create maps for quick lookup
     const routesMap = new Map(routes?.map((r) => [r.id, r]) || []);
