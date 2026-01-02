@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Calendar, Ticket, User, Search, LogOut, Home, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
@@ -19,11 +19,23 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
+const SIDEBAR_STORAGE_KEY = 'bookitsafari-sidebar-collapsed';
+
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  // Load sidebar state from localStorage on mount
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    return saved === 'true';
+  });
+
+  // Save sidebar state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isCollapsed));
+  }, [isCollapsed]);
 
   // Fetch user profile
   const { data: profile } = useQuery({
