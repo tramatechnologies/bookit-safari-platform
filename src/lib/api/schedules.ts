@@ -24,6 +24,7 @@ export interface ScheduleWithDetails extends Schedule {
   operator: {
     id: string;
     company_name: string;
+    status: string;
   } | null;
 }
 
@@ -52,7 +53,7 @@ export const schedulesApi = {
           duration_hours,
           distance_km,
           operator_id,
-          operator:bus_operators!routes_operator_id_fkey(id, company_name)
+          operator:bus_operators!routes_operator_id_fkey(id, company_name, status)
         ),
         bus:buses(
           id,
@@ -68,9 +69,16 @@ export const schedulesApi = {
 
     // Filter by route regions
     if (filters.fromRegionId || filters.toRegionId) {
+      // First, get routes that match the region criteria and have approved operators
       const routeQuery = supabase
         .from('routes')
-        .select('id')
+        .select(`
+          id,
+          operator:bus_operators!routes_operator_id_fkey(
+            id,
+            status
+          )
+        `)
         .eq('is_active', true);
 
       if (filters.fromRegionId) {
@@ -81,12 +89,39 @@ export const schedulesApi = {
       }
 
       const { data: routes } = await routeQuery;
-      const routeIds = routes?.map((r) => r.id) || [];
+      
+      // Filter to only include routes from approved operators
+      const routeIds = routes
+        ?.filter((r) => r.operator && (r.operator as any).status === 'approved')
+        .map((r) => r.id) || [];
       
       if (routeIds.length > 0) {
         query = query.in('route_id', routeIds);
       } else {
         // No routes match, return empty
+        return [];
+      }
+    } else {
+      // If no region filters, still filter by approved operators
+      // Get all routes from approved operators
+      const { data: approvedRoutes } = await supabase
+        .from('routes')
+        .select(`
+          id,
+          operator:bus_operators!routes_operator_id_fkey(
+            id,
+            status
+          )
+        `)
+        .eq('is_active', true);
+
+      const approvedRouteIds = approvedRoutes
+        ?.filter((r) => r.operator && (r.operator as any).status === 'approved')
+        .map((r) => r.id) || [];
+
+      if (approvedRouteIds.length > 0) {
+        query = query.in('route_id', approvedRouteIds);
+      } else {
         return [];
       }
     }
@@ -109,8 +144,15 @@ export const schedulesApi = {
 
     if (error) throw error;
 
-    // Filter by bus type if specified
+    // Filter by bus type if specified and ensure only approved operators
     let results = (data || []) as ScheduleWithDetails[];
+    
+    // Filter to only include schedules from approved operators
+    results = results.filter((schedule) => {
+      const operator = schedule.route?.operator as any;
+      return operator && operator.status === 'approved';
+    });
+    
     if (filters.busType) {
       results = results.filter(
         (schedule) => schedule.bus?.bus_type?.toLowerCase() === filters.busType?.toLowerCase()
@@ -135,7 +177,7 @@ export const schedulesApi = {
           duration_hours,
           distance_km,
           operator_id,
-          operator:bus_operators!routes_operator_id_fkey(id, company_name)
+          operator:bus_operators!routes_operator_id_fkey(id, company_name, status)
         ),
         bus:buses(
           id,
