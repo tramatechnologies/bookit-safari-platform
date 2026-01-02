@@ -67,35 +67,8 @@ export const schedulesApi = {
       .eq('is_active', true)
       .gte('departure_date', filters.date || new Date().toISOString().split('T')[0]);
 
-    // Filter by route regions
-    if (filters.fromRegionId || filters.toRegionId) {
-      // Get routes that match the region criteria (only select id to avoid RLS issues)
-      let routeQuery = supabase
-        .from('routes')
-        .select('id')
-        .eq('is_active', true);
-
-      if (filters.fromRegionId) {
-        routeQuery = routeQuery.eq('departure_region_id', filters.fromRegionId);
-      }
-      if (filters.toRegionId) {
-        routeQuery = routeQuery.eq('destination_region_id', filters.toRegionId);
-      }
-
-      const { data: routes } = await routeQuery;
-      
-      if (!routes || routes.length === 0) {
-        return [];
-      }
-
-      const routeIds = routes.map((r) => r.id);
-      
-      if (routeIds.length > 0) {
-        query = query.in('route_id', routeIds);
-      } else {
-        return [];
-      }
-    }
+    // Filter by route regions - we'll filter in the application layer after fetching
+    // This avoids RLS issues with direct route queries
 
     // Filter by price
     if (filters.minPrice) {
@@ -124,6 +97,26 @@ export const schedulesApi = {
       const operator = schedule.route?.operator as any;
       return operator && operator.status === 'approved';
     });
+    
+    // Filter by route regions if specified (application layer filtering)
+    if (filters.fromRegionId || filters.toRegionId) {
+      results = results.filter((schedule) => {
+        const route = schedule.route;
+        if (!route) return false;
+        
+        if (filters.fromRegionId) {
+          const departureRegionId = route.departure_region?.id;
+          if (departureRegionId !== filters.fromRegionId) return false;
+        }
+        
+        if (filters.toRegionId) {
+          const destinationRegionId = route.destination_region?.id;
+          if (destinationRegionId !== filters.toRegionId) return false;
+        }
+        
+        return true;
+      });
+    }
     
     if (filters.busType) {
       results = results.filter(
