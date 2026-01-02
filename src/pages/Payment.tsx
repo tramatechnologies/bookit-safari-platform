@@ -238,29 +238,7 @@ const Payment = () => {
     );
   }
 
-  // Check for existing completed payment
-  useEffect(() => {
-    const checkExistingPayment = async () => {
-      if (!bookingId || !user) return;
-      
-      const { data: existingPayment } = await supabase
-        .from('payments')
-        .select('id, status')
-        .eq('booking_id', bookingId)
-        .eq('status', 'completed')
-        .maybeSingle();
 
-      if (existingPayment) {
-        toast({
-          title: 'Payment already completed',
-          description: 'This booking has already been paid.',
-        });
-        navigate(`/booking/${booking.id}/confirmation`);
-      }
-    };
-
-    checkExistingPayment();
-  }, [bookingId, user, booking, navigate, toast]);
 
   // Handle both field names for compatibility (database uses total_amount_tzs)
   const totalAmount = Number((booking as any).total_price_tzs || (booking as any).total_amount_tzs || 0);
@@ -413,11 +391,11 @@ const Payment = () => {
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Booking Number</span>
-                      <span className="font-mono text-xs">{booking.booking_number}</span>
+                      <span className="font-mono text-xs">{booking.booking_reference}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Seats</span>
-                      <span className="font-medium">{booking.total_seats}</span>
+                      <span className="font-medium">{booking.seat_numbers?.length || 0}</span>
                     </div>
                     <div className="border-t border-border pt-3 flex justify-between">
                       <span className="font-bold">Total</span>

@@ -181,12 +181,15 @@ const Booking = () => {
     }
 
     if (!scheduleId || !user) return;
+    
+    // Create unique seat IDs array to use throughout the function
+    const uniqueSeatIds = Array.from(new Set(selectedSeatIds));
 
     // Validate all passengers have required information
     const passengerErrors: Record<string, Record<string, string>> = {};
     let hasErrors = false;
 
-    Array.from(new Set(selectedSeatIds)).forEach((seatId) => {
+    uniqueSeatIds.forEach((seatId) => {
       const passenger = passengers[seatId];
       const seatErrors: Record<string, string> = {};
 
@@ -236,7 +239,6 @@ const Booking = () => {
     }
 
     // Validate with Zod (using first passenger as primary contact)
-    const uniqueSeatIds = Array.from(new Set(selectedSeatIds));
     const primaryPassenger = passengers[uniqueSeatIds[0]];
     const passengerList = uniqueSeatIds.map((seatId) => {
       const p = passengers[seatId];
