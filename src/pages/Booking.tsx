@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Loader2, AlertCircle, ChevronDown, Users, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,11 +56,12 @@ const Booking = () => {
   const pricePerSeat = Number(schedule?.price_tzs) || 0;
 
   // Convert seat IDs to seat numbers for booking (calculate directly from IDs to avoid dependency issues)
+  // Use JSON.stringify to create a stable dependency for the array
   const selectedSeatNumbers = useMemo(() => {
     return selectedSeatIds
       .map(id => getSeatNumberFromId(id, seatLayoutType, totalSeats))
       .filter(n => n > 0);
-  }, [selectedSeatIds, seatLayoutType, totalSeats]);
+  }, [JSON.stringify(selectedSeatIds), seatLayoutType, totalSeats]);
 
   const totalPrice = selectedSeatNumbers.length * pricePerSeat;
 
