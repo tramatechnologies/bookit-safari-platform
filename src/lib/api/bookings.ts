@@ -17,6 +17,10 @@ export interface BookingWithSchedule extends Booking {
       destination_region: { name: string; code: string } | null;
       departure_terminal: string | null;
       arrival_terminal: string | null;
+      operator: {
+        company_name: string;
+        logo_url: string | null;
+      } | null;
     } | null;
     bus: {
       id: string;
