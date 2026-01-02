@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Loader2, AlertCircle, ChevronDown, Users, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,8 +30,9 @@ const Booking = () => {
   
   const { data: schedule, isLoading: loadingSchedule } = useSchedule(scheduleId || '');
   const { data: availableSeats = 0 } = useAvailableSeats(scheduleId || '');
-  // Stabilize departureDate to prevent infinite loops
-  const departureDate = useMemo(() => schedule?.departure_date || '', [schedule?.departure_date]);
+  
+  // Extract departure date as a primitive string (strings are stable primitives)
+  const departureDate = schedule?.departure_date ?? '';
   const { data: bookedSeats = [] } = useBookedSeats(scheduleId || '', departureDate);
   const createBooking = useCreateBooking();
 
