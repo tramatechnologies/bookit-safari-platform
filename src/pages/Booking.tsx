@@ -96,8 +96,8 @@ const Booking = () => {
         setSeatIdToNumberMap(newMap);
       } else {
         toast({
-          title: 'Kikomo cha Vitanda',
-          description: `Unaweza kuchagua vitanda ${numberOfPassengers} tu kwa abiria ${numberOfPassengers}.`,
+          title: 'Seat Limit Reached',
+          description: `You can only select ${numberOfPassengers} seat${numberOfPassengers > 1 ? 's' : ''} for ${numberOfPassengers} passenger${numberOfPassengers > 1 ? 's' : ''}.`,
           variant: 'destructive',
         });
       }
@@ -120,8 +120,8 @@ const Booking = () => {
     
     if (selectedSeatNumbers.length === 0) {
       toast({
-        title: 'Hakuna Vitanda Vilivyochaguliwa',
-        description: 'Tafadhali chagua angalau kiti kimoja.',
+        title: 'No Seats Selected',
+        description: 'Please select at least one seat.',
         variant: 'destructive',
       });
       return;
@@ -130,8 +130,8 @@ const Booking = () => {
     // Validate seat count matches passenger count
     if (selectedSeatNumbers.length !== numberOfPassengers) {
       toast({
-        title: 'Idadi ya Vitanda Haifanani',
-        description: `Umechagua vitanda ${selectedSeatNumbers.length} lakini una abiria ${numberOfPassengers}. Tafadhali chagua vitanda ${numberOfPassengers}.`,
+        title: 'Seat Count Mismatch',
+        description: `You selected ${selectedSeatNumbers.length} seat${selectedSeatNumbers.length > 1 ? 's' : ''} but have ${numberOfPassengers} passenger${numberOfPassengers > 1 ? 's' : ''}. Please select ${numberOfPassengers} seat${numberOfPassengers > 1 ? 's' : ''}.`,
         variant: 'destructive',
       });
       return;
@@ -158,8 +158,8 @@ const Booking = () => {
       });
       setErrors(fieldErrors);
       toast({
-        title: 'Hitilafu ya Uthibitishaji',
-        description: 'Tafadhali angalia fomu na sahihisha makosa.',
+        title: 'Validation Error',
+        description: 'Please check the form and correct the errors.',
         variant: 'destructive',
       });
       return;
@@ -181,8 +181,8 @@ const Booking = () => {
       } as any); // Type assertion needed until types are regenerated
 
       toast({
-        title: 'Rejista Imetengenezwa!',
-        description: 'Unaelekezwa kwenye malipo...',
+        title: 'Booking Created!',
+        description: 'Redirecting to payment...',
       });
 
       navigate(`/booking/${booking.id}/payment`);
@@ -240,12 +240,12 @@ const Booking = () => {
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-destructive mb-1">Ratiba Haipatikani</h3>
+              <h3 className="font-semibold text-destructive mb-1">Schedule Not Found</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Ratiba unayoitafuta haipo au haipatikani tena.
+                The schedule you're looking for doesn't exist or is no longer available.
               </p>
               <Button variant="outline" onClick={() => navigate('/')}>
-                Rudi Nyumbani
+                Go Home
               </Button>
             </div>
           </div>
@@ -268,7 +268,7 @@ const Booking = () => {
             className="mb-6"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Rudi kwenye Utafutaji
+            Back to Search
           </Button>
 
           <div className="grid lg:grid-cols-3 gap-8">
@@ -276,7 +276,7 @@ const Booking = () => {
             <div className="lg:col-span-2 space-y-6">
               {/* Operator & Bus Information */}
               <div className="bg-card rounded-2xl border border-border p-6">
-                <h2 className="font-display text-xl font-bold mb-4">Taarifa za Kampuni na Basi</h2>
+                <h2 className="font-display text-xl font-bold mb-4">Company & Bus Information</h2>
                 <div className="space-y-4">
                   {/* Operator Info */}
                   {schedule.route?.operator && (
@@ -315,7 +315,7 @@ const Booking = () => {
                         <div className="flex items-center gap-3">
                           <Bus className="w-5 h-5 text-amber" />
                           <div>
-                            <p className="text-sm text-muted-foreground">Namba ya Leseni</p>
+                            <p className="text-sm text-muted-foreground">License Plate</p>
                             <p className="font-mono font-semibold text-lg">{schedule.bus.plate_number}</p>
                           </div>
                         </div>
@@ -324,7 +324,7 @@ const Booking = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-5 h-5" />
                           <div>
-                            <p className="text-sm text-muted-foreground">Aina ya Basi</p>
+                            <p className="text-sm text-muted-foreground">Bus Type</p>
                             <span className="inline-block px-3 py-1 bg-teal/20 text-teal rounded text-sm font-medium mt-1">
                               {schedule.bus.bus_type}
                             </span>
@@ -335,7 +335,7 @@ const Booking = () => {
                         <div className="flex items-start gap-3 pt-2">
                           <div className="w-5 h-5" />
                           <div className="flex-1">
-                            <p className="text-sm text-muted-foreground mb-2">Vifaa</p>
+                            <p className="text-sm text-muted-foreground mb-2">Amenities</p>
                             <div className="flex flex-wrap gap-2">
                               {schedule.bus.amenities.map((amenity, index) => (
                                 <span
@@ -357,16 +357,16 @@ const Booking = () => {
               {/* Seat Selection */}
               <div className="bg-card rounded-2xl border border-border p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-display text-2xl font-bold">CHAGUA KITI CHAKO</h2>
+                  <h2 className="font-display text-2xl font-bold">SELECT YOUR SEAT</h2>
                   <div className="text-sm text-muted-foreground">
-                    Vitanda {availableSeats} vinapatikana
+                    {availableSeats} seats available
                   </div>
                 </div>
 
                 {/* Passenger Count Selector */}
                 <div className="mb-6 p-4 bg-muted/50 rounded-lg">
                   <Label htmlFor="passenger_count" className="text-sm font-medium mb-2 block">
-                    Idadi ya Abiria *
+                    Number of Passengers *
                   </Label>
                   <Select
                     value={numberOfPassengers.toString()}
@@ -378,18 +378,18 @@ const Booking = () => {
                     <SelectContent>
                       {Array.from({ length: Math.min(10, availableSeats) }, (_, i) => i + 1).map((count) => (
                         <SelectItem key={count} value={count.toString()}>
-                          {count} {count === 1 ? 'Abiria' : 'Abiria'}
+                          {count} {count === 1 ? 'Passenger' : 'Passengers'}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Chagua vitanda {numberOfPassengers} {numberOfPassengers === 1 ? 'kwa abiria' : 'kwa abiria'} {numberOfPassengers}
+                    Select {numberOfPassengers} seat{numberOfPassengers > 1 ? 's' : ''} for {numberOfPassengers} passenger{numberOfPassengers > 1 ? 's' : ''}
                   </p>
                 </div>
 
                 <p className="text-sm text-muted-foreground mb-6">
-                  Chagua kiti kwa kubonyeza alama ya kiti unachohitaji
+                  Click on a seat to select it
                 </p>
 
                 {/* Seat Map */}
@@ -398,15 +398,15 @@ const Booking = () => {
                   <div className="flex items-center gap-6 text-sm mb-6">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded border-2 border-gray-300 bg-gray-100" />
-                      <span className="text-muted-foreground">Kilichopo</span>
+                      <span className="text-muted-foreground">Available</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded border-2 border-red-500 bg-red-500" />
-                      <span className="text-muted-foreground">Kilichochaguliwa</span>
+                      <span className="text-muted-foreground">Selected</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded border-2 border-gray-400 bg-gray-300 opacity-50" />
-                      <span className="text-muted-foreground">Kisichopatikana</span>
+                      <span className="text-muted-foreground">Unavailable</span>
                     </div>
                   </div>
 
@@ -425,12 +425,12 @@ const Booking = () => {
 
                   {selectedSeatIds.length > 0 && (
                     <div className="mt-4 p-4 bg-red-500/10 rounded-lg">
-                      <p className="text-sm font-medium mb-2">UCHAGUZ WA KITI</p>
+                      <p className="text-sm font-medium mb-2">SEAT SELECTION</p>
                       <p className="text-xs text-muted-foreground mb-2">
-                        Vitanda vilivyochaguliwa: {selectedSeatIds.length} / {numberOfPassengers}
+                        Seats selected: {selectedSeatIds.length} / {numberOfPassengers}
                         {selectedSeatIds.length < numberOfPassengers && (
                           <span className="text-amber-600 ml-2">
-                            (Chagua vitanda {numberOfPassengers - selectedSeatIds.length} zaidi)
+                            (Select {numberOfPassengers - selectedSeatIds.length} more seat{numberOfPassengers - selectedSeatIds.length > 1 ? 's' : ''})
                           </span>
                         )}
                       </p>
@@ -440,7 +440,7 @@ const Booking = () => {
                             key={seatId}
                             className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-medium"
                           >
-                            Kiti {seatId}
+                            Seat {seatId}
                           </span>
                         ))}
                       </div>
@@ -451,13 +451,13 @@ const Booking = () => {
 
               {/* Boarding and Drop-off Points */}
               <div className="bg-card rounded-2xl border border-border p-6">
-                <h2 className="font-display text-2xl font-bold mb-4">Chagua Vituo</h2>
+                <h2 className="font-display text-2xl font-bold mb-4">Select Terminals</h2>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="boarding">KITUO UTAKAPOPANDA BASI</Label>
+                    <Label htmlFor="boarding">BOARDING POINT</Label>
                     <Select value={boardingPoint} onValueChange={setBoardingPoint}>
                       <SelectTrigger id="boarding" className="w-full">
-                        <SelectValue placeholder="Chagua kituo cha basi" />
+                        <SelectValue placeholder="Select boarding point" />
                         <ChevronDown className="w-4 h-4 opacity-50" />
                       </SelectTrigger>
                       <SelectContent>
@@ -469,7 +469,7 @@ const Booking = () => {
                           ))
                         ) : (
                           <SelectItem value={schedule.route?.departure_terminal || ''} disabled>
-                            {schedule.route?.departure_terminal || 'Hakuna vituo vinavyopatikana'}
+                            {schedule.route?.departure_terminal || 'No terminals available'}
                           </SelectItem>
                         )}
                       </SelectContent>
@@ -477,10 +477,10 @@ const Booking = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="dropoff">KITUO CHA KUSHUKIA</Label>
+                    <Label htmlFor="dropoff">DROP-OFF POINT</Label>
                     <Select value={dropOffPoint} onValueChange={setDropOffPoint}>
                       <SelectTrigger id="dropoff" className="w-full">
-                        <SelectValue placeholder="Chagua kituo" />
+                        <SelectValue placeholder="Select drop-off point" />
                         <ChevronDown className="w-4 h-4 opacity-50" />
                       </SelectTrigger>
                       <SelectContent>
@@ -492,7 +492,7 @@ const Booking = () => {
                           ))
                         ) : (
                           <SelectItem value={schedule.route?.arrival_terminal || ''} disabled>
-                            {schedule.route?.arrival_terminal || 'Hakuna vituo vinavyopatikana'}
+                            {schedule.route?.arrival_terminal || 'No terminals available'}
                           </SelectItem>
                         )}
                       </SelectContent>
@@ -503,23 +503,23 @@ const Booking = () => {
 
               {/* Passenger Information */}
               <div className="bg-card rounded-2xl border border-border p-6">
-                <h2 className="font-display text-2xl font-bold mb-4">Taarifa za Abiria</h2>
+                <h2 className="font-display text-2xl font-bold mb-4">Passenger Information</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Jina Kamili *</Label>
+                    <Label htmlFor="name">Full Name *</Label>
                     <Input
                       id="name"
                       value={passengerInfo.name}
                       onChange={(e) =>
                         setPassengerInfo({ ...passengerInfo, name: e.target.value })
                       }
-                      placeholder="Ingiza Jina Lako Kamili"
+                      placeholder="Enter your full name"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Namba ya Simu *</Label>
+                    <Label htmlFor="phone">Phone Number *</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -529,7 +529,7 @@ const Booking = () => {
                         if (errors.passengerPhone) setErrors({ ...errors, passengerPhone: '' });
                       }}
                       className={errors.passengerPhone ? 'border-destructive' : ''}
-                      placeholder="Ingiza Namba ya Simu Yako"
+                      placeholder="Enter your phone number"
                       required
                       disabled={createBooking.isPending}
                     />
@@ -539,7 +539,7 @@ const Booking = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Barua Pepe (Si Lazima)</Label>
+                    <Label htmlFor="email">Email (Optional)</Label>
                     <Input
                       id="email"
                       type="email"
@@ -549,7 +549,7 @@ const Booking = () => {
                         if (errors.passengerEmail) setErrors({ ...errors, passengerEmail: '' });
                       }}
                       className={errors.passengerEmail ? 'border-destructive' : ''}
-                      placeholder="Ingiza Anwani ya Barua Pepe Yako (Si Lazima)"
+                      placeholder="Enter your email address (optional)"
                       disabled={createBooking.isPending}
                     />
                     {errors.passengerEmail && (
@@ -567,12 +567,12 @@ const Booking = () => {
                     {createBooking.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Inachakata...
+                        Processing...
                       </>
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4 mr-2" />
-                        Endelea kwenye Malipo
+                        Proceed to Payment
                       </>
                     )}
                   </Button>

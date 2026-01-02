@@ -47,20 +47,20 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
 
   return (
     <div className="bg-card rounded-2xl border border-border p-6 space-y-6">
-      <h3 className="font-display text-xl font-bold mb-4">Muhtasari wa Rejista</h3>
+      <h3 className="font-display text-xl font-bold mb-4">Booking Summary</h3>
 
       {/* Trip Details */}
       <div className="space-y-4">
         <div className="flex items-start gap-3">
           <MapPin className="w-5 h-5 text-teal mt-1 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm text-muted-foreground">Kutoka</p>
+            <p className="text-sm text-muted-foreground">From</p>
             <p className="font-semibold">
               {schedule.route?.departure_region?.name || 'N/A'}
             </p>
             {boardingPoint && (
               <p className="text-sm text-muted-foreground mt-1">
-                Kituo: {boardingPoint}
+                Terminal: {boardingPoint}
               </p>
             )}
           </div>
@@ -69,13 +69,13 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
         <div className="flex items-start gap-3">
           <MapPin className="w-5 h-5 text-amber mt-1 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm text-muted-foreground">Kwenda</p>
+            <p className="text-sm text-muted-foreground">To</p>
             <p className="font-semibold">
               {schedule.route?.destination_region?.name || 'N/A'}
             </p>
             {dropOffPoint && (
               <p className="text-sm text-muted-foreground mt-1">
-                Kituo: {dropOffPoint}
+                Terminal: {dropOffPoint}
               </p>
             )}
           </div>
@@ -84,9 +84,9 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
         <div className="flex items-center gap-3">
           <Calendar className="w-5 h-5 text-muted-foreground" />
           <div>
-            <p className="text-sm text-muted-foreground">Tarehe</p>
+            <p className="text-sm text-muted-foreground">Date</p>
             <p className="font-semibold">
-              {new Date(schedule.departure_date).toLocaleDateString('sw-TZ', {
+              {new Date(schedule.departure_date).toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -99,7 +99,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
         <div className="flex items-center gap-3">
           <Clock className="w-5 h-5 text-muted-foreground" />
           <div>
-            <p className="text-sm text-muted-foreground">Muda wa Kuondoka</p>
+            <p className="text-sm text-muted-foreground">Departure Time</p>
             <p className="font-semibold">{schedule.departure_time.substring(0, 5)}</p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           <div className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-muted-foreground" />
             <div>
-              <p className="text-sm text-muted-foreground">Muda wa Safari</p>
+              <p className="text-sm text-muted-foreground">Trip Duration</p>
               <p className="font-semibold">
                 {Math.floor(schedule.route.duration_hours)}h {Math.round((schedule.route.duration_hours % 1) * 60)}m
               </p>
@@ -120,7 +120,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
           <div className="flex items-start gap-3 p-3 bg-amber/10 rounded-lg border border-amber/20">
             <Bus className="w-5 h-5 text-amber mt-0.5 flex-shrink-0" />
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-1">Basi Lako</p>
+              <p className="text-sm text-muted-foreground mb-1">Your Bus</p>
               {schedule.bus.plate_number && (
                 <p className="font-bold text-lg font-mono">
                   {schedule.bus.plate_number}
@@ -135,7 +135,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
               )}
               {schedule.bus.amenities && schedule.bus.amenities.length > 0 && (
                 <div className="mt-3">
-                  <p className="text-xs text-muted-foreground mb-1.5">Vifaa:</p>
+                  <p className="text-xs text-muted-foreground mb-1.5">Amenities:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {schedule.bus.amenities.map((amenity, index) => (
                       <span
@@ -180,7 +180,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
 
       {/* Selected Seats */}
       <div className="border-t border-border pt-4">
-        <h4 className="font-semibold mb-3">Vitanda Vilivyochaguliwa</h4>
+        <h4 className="font-semibold mb-3">Selected Seats</h4>
         <div className="flex flex-wrap gap-2">
           {selectedSeats.length > 0 ? (
             selectedSeats.map((seatId) => (
@@ -188,33 +188,33 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
                 key={seatId}
                 className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-medium"
               >
-                Kiti {seatId}
+                Seat {seatId}
               </span>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">Hakuna vitanda vilivyochaguliwa</p>
+            <p className="text-sm text-muted-foreground">No seats selected</p>
           )}
         </div>
       </div>
 
       {/* Passenger Information */}
       <div className="border-t border-border pt-4">
-        <h4 className="font-semibold mb-3">Taarifa za Abiria</h4>
+        <h4 className="font-semibold mb-3">Passenger Information</h4>
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Jina:</span>
+            <span className="text-muted-foreground">Name:</span>
             <span className="font-medium">{passengerInfo.name || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
             <Phone className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Simu:</span>
+            <span className="text-muted-foreground">Phone:</span>
             <span className="font-medium">{passengerInfo.phone || 'N/A'}</span>
           </div>
           {passengerInfo.email && (
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-muted-foreground" />
-              <span className="text-muted-foreground">Barua pepe:</span>
+              <span className="text-muted-foreground">Email:</span>
               <span className="font-medium">{passengerInfo.email}</span>
             </div>
           )}
@@ -223,18 +223,18 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
 
       {/* Price Summary */}
       <div className="border-t border-border pt-4">
-        <h4 className="font-semibold mb-3">Muhtasari wa Bei</h4>
+        <h4 className="font-semibold mb-3">Price Summary</h4>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">
-              Vitanda ({selectedSeats.length})
+              Seats ({selectedSeats.length})
             </span>
             <span className="font-medium">
               {formatPrice(selectedSeats.length * Number(schedule.price_tzs))}
             </span>
           </div>
           <div className="border-t border-border pt-2 flex justify-between">
-            <span className="font-bold">Jumla</span>
+            <span className="font-bold">Total</span>
             <span className="font-bold text-2xl text-teal">
               {formatPrice(totalPrice)}
             </span>
@@ -245,9 +245,9 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
       {/* Additional Info */}
       <div className="border-t border-border pt-4">
         <div className="text-xs text-muted-foreground space-y-1">
-          <p>• Malipo kwa njia ya simu au kadi</p>
-          <p>• Uthibitisho wa rejista utatuma kwa SMS/Barua pepe</p>
-          <p>• Kufuta rejista kuruhusiwa hadi saa 24 kabla ya kuondoka</p>
+          <p>• Payment via mobile money or card</p>
+          <p>• Booking confirmation will be sent via SMS/Email</p>
+          <p>• Cancellation allowed up to 24 hours before departure</p>
         </div>
       </div>
     </div>
