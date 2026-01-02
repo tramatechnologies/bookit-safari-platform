@@ -248,35 +248,81 @@ export const schedulesApi = {
 
   // Get schedule by ID
   async getScheduleById(scheduleId: string): Promise<ScheduleWithDetails | null> {
-    const { data, error } = await supabase
-      .from('schedules')
-      .select(`
-        *,
-        route:routes(
-          id,
-          departure_region:regions!routes_departure_region_id_fkey(id, name, code),
-          destination_region:regions!routes_destination_region_id_fkey(id, name, code),
-          departure_terminal,
-          arrival_terminal,
-          duration_hours,
-          distance_km,
-          operator_id,
-          operator:bus_operators!routes_operator_id_fkey(id, company_name, status)
-        ),
-        bus:buses(
-          id,
-          bus_number,
-          plate_number,
-          bus_type,
-          total_seats,
-          amenities
-        )
-      `)
-      .eq('id', scheduleId)
-      .single();
+    // Use database function to get schedule - fetch all and filter by ID
+    const { data: schedulesData, error: scheduleError } = await supabase.rpc('get_active_schedules', {
+      p_departure_date: '1900-01-01', // Get all schedules, we'll filter by ID
+      p_min_price: null,
+      p_max_price: null,
+    });
 
-    if (error) throw error;
-    return data as ScheduleWithDetails | null;
+    if (scheduleError) throw scheduleError;
+    
+    // Find the specific schedule
+    const schedule = schedulesData?.find((s: any) => s.id === scheduleId);
+    if (!schedule) return null;
+
+    // Fetch route, bus, regions, and operator separately
+    const routeId = schedule.route_id;
+    const busId = schedule.bus_id;
+
+    if (!routeId || !busId) return null;
+
+    // Fetch route, bus, and operator in parallel
+    const [routeRes, busRes] = await Promise.all([
+      supabase.rpc('get_routes_by_ids', { p_route_ids: [routeId] }),
+      supabase.rpc('get_buses_by_ids', { p_bus_ids: [busId] }),
+    ]);
+
+    const route = routeRes.data?.[0] || null;
+    const bus = busRes.data?.[0] || null;
+
+    if (!route || !bus) return null;
+
+    // Get region IDs and fetch regions
+    const regionIds = [
+      route.departure_region_id,
+      route.destination_region_id,
+    ].filter(Boolean) as string[];
+
+    let regionsMap = new Map<string, { id: string; name: string; code: string }>();
+    if (regionIds.length > 0) {
+      const { data: regions } = await supabase
+        .from('regions')
+        .select('id, name, code')
+        .in('id', regionIds);
+      
+      if (regions) {
+        regions.forEach((r) => {
+          regionsMap.set(r.id, r);
+        });
+      }
+    }
+
+    // Get operator
+    const operatorId = route.operator_id;
+    let operator = null;
+    if (operatorId) {
+      const { data: operators } = await supabase.rpc('get_bus_operators_by_ids', {
+        p_operator_ids: [operatorId],
+      });
+      operator = operators?.[0] || null;
+    }
+
+    // Combine all data
+    return {
+      ...schedule,
+      route: {
+        ...route,
+        departure_region: route.departure_region_id ? regionsMap.get(route.departure_region_id) || null : null,
+        destination_region: route.destination_region_id ? regionsMap.get(route.destination_region_id) || null : null,
+        operator: operator ? {
+          id: operator.id,
+          company_name: operator.company_name,
+          status: operator.status,
+        } : null,
+      },
+      bus,
+    } as ScheduleWithDetails;
   },
 
   // Get available seats for a schedule
