@@ -24,7 +24,7 @@ const PassengerDashboard = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
       
       if (error && error.code !== 'PGRST116') {
@@ -62,7 +62,7 @@ const PassengerDashboard = () => {
 
       const { data: bookings, error } = await supabase
         .from('bookings')
-        .select('id, status, created_at, total_amount_tzs')
+        .select('id, status, created_at, total_price_tzs')
         .eq('user_id', user.id)
         .gte('created_at', startDate.toISOString());
 
@@ -76,7 +76,7 @@ const PassengerDashboard = () => {
       const totalBookings = bookings?.length || 0;
       const confirmedBookings = bookings?.filter(b => b.status === 'confirmed').length || 0;
       const totalSpent = bookings?.reduce((sum, b) => {
-        const amount = Number((b as any).total_price_tzs || (b as any).total_amount_tzs || 0);
+        const amount = Number((b as any).total_price_tzs || 0);
         return sum + amount;
       }, 0) || 0;
 
@@ -98,12 +98,17 @@ const PassengerDashboard = () => {
             *,
             route:routes(
               *,
-              departure_region:regions!routes_departure_region_id_fkey(name),
-              destination_region:regions!routes_destination_region_id_fkey(name)
+              departure_region:regions!routes_departure_region_id_fkey(id, name),
+              destination_region:regions!routes_destination_region_id_fkey(id, name),
+              operator:bus_operators!routes_operator_id_fkey(id, company_name)
             ),
             bus:buses(
-              *,
-              operator:bus_operators(company_name)
+              id,
+              bus_number,
+              plate_number,
+              bus_type,
+              total_seats,
+              amenities
             )
           )
         `)
@@ -238,14 +243,12 @@ const PassengerDashboard = () => {
                     const schedule = booking.schedule;
                     const route = schedule?.route;
                     const bus = schedule?.bus;
-                    const operator = bus?.operator;
+                    const operator = route?.operator;
                     const departureRegion = route?.departure_region;
                     const destinationRegion = route?.destination_region;
                     
                     const totalAmount = Number(
-                      (booking as any).total_price_tzs || 
-                      (booking as any).total_amount_tzs || 
-                      0
+                      (booking as any).total_price_tzs || 0
                     );
 
                     return (
