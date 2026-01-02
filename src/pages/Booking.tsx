@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Loader2, AlertCircle, ChevronDown, Users, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -71,39 +71,48 @@ const Booking = () => {
   const boardingOptions: string[] = departureTerminal ? [departureTerminal] : [];
   const dropOffOptions: string[] = arrivalTerminal ? [arrivalTerminal] : [];
 
-  const handleSeatClick = (seatId: string, seatNumber: number) => {
-    if (selectedSeatIds.includes(seatId)) {
-      // Deselect seat
-      setSelectedSeatIds(selectedSeatIds.filter((id) => id !== seatId));
-      // Remove passenger info for deselected seat
-      const newPassengers = { ...passengers };
-      delete newPassengers[seatId];
-      setPassengers(newPassengers);
-    } else {
-      if (selectedSeatIds.length < numberOfPassengers) {
-        setSelectedSeatIds([...selectedSeatIds, seatId]);
-        // Initialize passenger info for new seat
-        if (!passengers[seatId]) {
-          setPassengers({
-            ...passengers,
-            [seatId]: {
-              name: '',
-              gender: '',
-              category: '',
-              phone: selectedSeatIds.length === 0 ? passengerInfo.phone : undefined,
-              email: selectedSeatIds.length === 0 ? passengerInfo.email : undefined,
-            },
-          });
-        }
-      } else {
-        toast({
-          title: 'Seat Limit Reached',
-          description: `You can only select ${numberOfPassengers} seat${numberOfPassengers > 1 ? 's' : ''} for ${numberOfPassengers} passenger${numberOfPassengers > 1 ? 's' : ''}.`,
-          variant: 'destructive',
+  const handleSeatClick = useCallback((seatId: string, seatNumber: number) => {
+    setSelectedSeatIds((prevIds) => {
+      if (prevIds.includes(seatId)) {
+        // Deselect seat
+        const newIds = prevIds.filter((id) => id !== seatId);
+        // Remove passenger info for deselected seat
+        setPassengers((prev) => {
+          const newPassengers = { ...prev };
+          delete newPassengers[seatId];
+          return newPassengers;
         });
+        return newIds;
+      } else {
+        if (prevIds.length < numberOfPassengers) {
+          // Initialize passenger info for new seat
+          setPassengers((prev) => {
+            if (!prev[seatId]) {
+              return {
+                ...prev,
+                [seatId]: {
+                  name: '',
+                  gender: '',
+                  category: '',
+                  phone: prevIds.length === 0 ? passengerInfo.phone : undefined,
+                  email: prevIds.length === 0 ? passengerInfo.email : undefined,
+                },
+              };
+            }
+            return prev;
+          });
+          return [...prevIds, seatId];
+        } else {
+          toast({
+            title: 'Seat Limit Reached',
+            description: `You can only select ${numberOfPassengers} seat${numberOfPassengers > 1 ? 's' : ''} for ${numberOfPassengers} passenger${numberOfPassengers > 1 ? 's' : ''}.`,
+            variant: 'destructive',
+          });
+          return prevIds;
+        }
       }
-    }
-  };
+    });
+  }, [numberOfPassengers, passengerInfo.phone, passengerInfo.email, toast]);
 
   const handlePassengerChange = (seatId: string, passenger: PassengerInfo) => {
     setPassengers((prev) => ({
