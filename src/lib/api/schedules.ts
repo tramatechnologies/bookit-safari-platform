@@ -44,34 +44,12 @@ export interface SearchFilters {
 export const schedulesApi = {
   // Search schedules
   async searchSchedules(filters: SearchFilters): Promise<ScheduleWithDetails[]> {
+    // Fetch schedules without nested selects to avoid RLS issues
     let query = supabase
       .from('schedules')
-      .select(`
-        *,
-        route:routes(
-          id,
-          departure_region_id,
-          destination_region_id,
-          departure_terminal,
-          arrival_terminal,
-          duration_hours,
-          distance_km,
-          operator_id
-        ),
-        bus:buses(
-          id,
-          bus_number,
-          plate_number,
-          bus_type,
-          total_seats,
-          amenities
-        )
-      `)
+      .select('*')
       .eq('is_active', true)
       .gte('departure_date', filters.date || new Date().toISOString().split('T')[0]);
-
-    // Filter by route regions - we'll filter in the application layer after fetching
-    // This avoids RLS issues with direct route queries
 
     // Filter by price
     if (filters.minPrice) {
@@ -81,19 +59,63 @@ export const schedulesApi = {
       query = query.lte('price_tzs', filters.maxPrice);
     }
 
-    // Filter by bus type (if needed, would need to join with buses)
-    if (filters.busType) {
-      // This would require a more complex query
-      // For now, we'll filter in the application layer
-    }
-
-    const { data, error } = await query.order('departure_time', { ascending: true });
+    const { data: schedules, error } = await query.order('departure_time', { ascending: true });
 
     if (error) throw error;
+    if (!schedules || schedules.length === 0) return [];
 
-    // Filter by bus type if specified and ensure only approved operators
-    let results = (data || []) as ScheduleWithDetails[];
-    
+    // Extract route and bus IDs
+    const routeIds = [...new Set(schedules.map((s) => s.route_id).filter(Boolean) as string[])];
+    const busIds = [...new Set(schedules.map((s) => s.bus_id).filter(Boolean) as string[])];
+
+    // Fetch routes separately
+    const { data: routes } = await supabase
+      .from('routes')
+      .select('id, departure_region_id, destination_region_id, departure_terminal, arrival_terminal, duration_hours, distance_km, operator_id, is_active')
+      .in('id', routeIds)
+      .eq('is_active', true);
+
+    // Fetch buses separately
+    const { data: buses } = await supabase
+      .from('buses')
+      .select('id, bus_number, plate_number, bus_type, total_seats, amenities, is_active')
+      .in('id', busIds)
+      .eq('is_active', true);
+
+    // Create maps for quick lookup
+    const routesMap = new Map(routes?.map((r) => [r.id, r]) || []);
+    const busesMap = new Map(buses?.map((b) => [b.id, b]) || []);
+
+    // Combine schedules with routes and buses
+    let results = schedules.map((schedule) => {
+      const route = schedule.route_id ? routesMap.get(schedule.route_id) : null;
+      const bus = schedule.bus_id ? busesMap.get(schedule.bus_id) : null;
+      
+      return {
+        ...schedule,
+        route: route ? {
+          id: route.id,
+          departure_region_id: route.departure_region_id,
+          destination_region_id: route.destination_region_id,
+          departure_terminal: route.departure_terminal,
+          arrival_terminal: route.arrival_terminal,
+          duration_hours: route.duration_hours,
+          distance_km: route.distance_km,
+          operator_id: route.operator_id,
+          departure_region: null, // Will be populated later
+          destination_region: null, // Will be populated later
+        } : null,
+        bus: bus ? {
+          id: bus.id,
+          bus_number: bus.bus_number,
+          plate_number: bus.plate_number,
+          bus_type: bus.bus_type,
+          total_seats: bus.total_seats,
+          amenities: bus.amenities,
+        } : null,
+      } as ScheduleWithDetails;
+    });
+
     // Get operator IDs from routes and check which are approved
     const operatorIds = [...new Set(
       results
