@@ -115,10 +115,10 @@ export const SeatLayout: React.FC<SeatLayoutProps> = ({
         w-8 h-8 rounded border text-[10px] font-semibold
         transition-all duration-150 flex items-center justify-center
         ${seat.selected
-          ? 'bg-red-500 border-red-500 text-white shadow-md'
+          ? 'bg-green-500 border-green-500 text-white shadow-md'
           : seat.available
           ? 'bg-white border-gray-300 text-gray-700 hover:border-teal-500 hover:bg-teal-50'
-          : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+          : 'bg-red-500 border-red-500 text-white cursor-not-allowed opacity-60'
         }
       `}
       title={seat.available ? `Seat ${seat.id}` : `Seat ${seat.id} - Booked`}
@@ -200,18 +200,18 @@ export const SeatLayout: React.FC<SeatLayoutProps> = ({
           <span className="text-gray-500">Available</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-red-500" />
+          <div className="w-3 h-3 rounded bg-green-500" />
           <span className="text-gray-500">Selected</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-gray-100 border border-gray-200" />
+          <div className="w-3 h-3 rounded bg-red-500 opacity-60" />
           <span className="text-gray-500">Booked</span>
         </div>
       </div>
 
       {/* Selection count */}
       <div className="mt-2 text-center text-xs text-gray-600">
-        Selected: <span className="font-bold text-red-500">{selectedSeats.length}</span> / {maxSelections}
+        Selected: <span className="font-bold text-green-500">{selectedSeats.length}</span> / {maxSelections}
       </div>
     </div>
   );
