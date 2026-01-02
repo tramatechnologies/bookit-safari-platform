@@ -112,7 +112,7 @@ export const SeatLayout: React.FC<SeatLayoutProps> = ({
       onClick={() => handleSeatClick(seat)}
       disabled={!seat.available}
       className={`
-        w-10 h-10 rounded-md border text-xs font-semibold
+        w-8 h-8 rounded border text-[10px] font-semibold
         transition-all duration-150 flex items-center justify-center
         ${seat.selected
           ? 'bg-red-500 border-red-500 text-white shadow-md'
@@ -127,34 +127,34 @@ export const SeatLayout: React.FC<SeatLayoutProps> = ({
     </button>
   );
 
-  const EmptySlot = () => <div className="w-10 h-10" />;
+  const EmptySlot = () => <div className="w-8 h-8" />;
 
   return (
-    <div className="w-full max-w-xs mx-auto">
+    <div className="w-full max-w-[280px] mx-auto">
       {/* Driver */}
-      <div className="flex justify-center mb-4">
-        <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center">
-          <Bus className="w-5 h-5 text-gray-400" />
+      <div className="flex justify-center mb-2">
+        <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center">
+          <Bus className="w-4 h-4 text-gray-400" />
         </div>
       </div>
 
       {/* Seats */}
-      <div className="space-y-1.5">
+      <div className="space-y-0.5">
         {visibleRows.map((rowLetter) => {
           const rowSeats = seatsByRow[rowLetter] || [];
           const isBackRow = rowLetter === 'N';
           const hasLeftSide = !rowsWithoutLeftSeats.includes(rowLetter);
 
           if (isBackRow) {
-            // Back row: 5 seats centered
+            // Back row: 5 seats centered, ensure they fit
             const sortedSeats = [...rowSeats].sort((a, b) => b.column - a.column);
             return (
-              <div key={rowLetter} className="flex items-center">
-                <div className="w-5 text-xs text-gray-400 text-center">{rowLetter}</div>
-                <div className="flex-1 flex justify-center gap-1">
+              <div key={rowLetter} className="flex items-center justify-center">
+                <div className="w-4 text-[10px] text-gray-400 text-center">{rowLetter}</div>
+                <div className="flex gap-0.5 justify-center max-w-[220px]">
                   {sortedSeats.map(seat => <SeatButton key={seat.id} seat={seat} />)}
                 </div>
-                <div className="w-5 text-xs text-gray-400 text-center">{rowLetter}</div>
+                <div className="w-4 text-[10px] text-gray-400 text-center">{rowLetter}</div>
               </div>
             );
           }
@@ -164,11 +164,11 @@ export const SeatLayout: React.FC<SeatLayoutProps> = ({
           const rightSeats = rowSeats.filter(s => s.column <= 2).sort((a, b) => b.column - a.column);
 
           return (
-            <div key={rowLetter} className="flex items-center">
-              <div className="w-5 text-xs text-gray-400 text-center">{rowLetter}</div>
-              <div className="flex-1 flex justify-center items-center">
-                {/* Left side - always 2 slots */}
-                <div className="flex gap-1 w-[88px] justify-end">
+            <div key={rowLetter} className="flex items-center justify-center">
+              <div className="w-4 text-[10px] text-gray-400 text-center">{rowLetter}</div>
+              <div className="flex items-center justify-center">
+                {/* Left side - fixed width */}
+                <div className="flex gap-0.5 w-[68px] justify-end">
                   {hasLeftSide && leftSeats.length > 0 ? (
                     leftSeats.map(seat => <SeatButton key={seat.id} seat={seat} />)
                   ) : (
@@ -180,40 +180,39 @@ export const SeatLayout: React.FC<SeatLayoutProps> = ({
                 </div>
                 
                 {/* Aisle */}
-                <div className="w-6" />
+                <div className="w-4" />
                 
-                {/* Right side - always 2 slots */}
-                <div className="flex gap-1 w-[88px]">
+                {/* Right side - fixed width */}
+                <div className="flex gap-0.5 w-[68px]">
                   {rightSeats.map(seat => <SeatButton key={seat.id} seat={seat} />)}
                 </div>
               </div>
-              <div className="w-5 text-xs text-gray-400 text-center">{rowLetter}</div>
+              <div className="w-4 text-[10px] text-gray-400 text-center">{rowLetter}</div>
             </div>
           );
         })}
       </div>
 
       {/* Legend */}
-      <div className="flex justify-center gap-4 mt-5 text-xs">
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded border border-gray-300 bg-white" />
+      <div className="flex justify-center gap-3 mt-3 text-[10px]">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded border border-gray-300 bg-white" />
           <span className="text-gray-500">Available</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded bg-red-500" />
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-red-500" />
           <span className="text-gray-500">Selected</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded bg-gray-100 border border-gray-200" />
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded bg-gray-100 border border-gray-200" />
           <span className="text-gray-500">Booked</span>
         </div>
       </div>
 
       {/* Selection count */}
-      <div className="mt-3 text-center text-sm text-gray-600">
-        Selected: <span className="font-bold text-red-500">{selectedSeats.length}</span> / {maxSelections} seats
+      <div className="mt-2 text-center text-xs text-gray-600">
+        Selected: <span className="font-bold text-red-500">{selectedSeats.length}</span> / {maxSelections}
       </div>
     </div>
   );
 };
-
