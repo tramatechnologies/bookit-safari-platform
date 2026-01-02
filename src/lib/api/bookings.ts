@@ -24,7 +24,7 @@ export interface BookingWithSchedule extends Booking {
     } | null;
     bus: {
       id: string;
-      bus_number: string;
+      plate_number: string;
       bus_type: string | null;
       amenities: string[] | null;
     } | null;
@@ -64,7 +64,6 @@ export const bookingsApi = {
           ),
           bus:buses(
             id,
-            bus_number,
             plate_number,
             bus_type,
             amenities
@@ -110,7 +109,6 @@ export const bookingsApi = {
           ),
           bus:buses(
             id,
-            bus_number,
             plate_number,
             bus_type,
             amenities

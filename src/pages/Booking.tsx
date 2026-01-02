@@ -158,21 +158,6 @@ const Booking = () => {
     }
   };
 
-  const handlePassengerChange = (seatId: string, passenger: PassengerInfo) => {
-    setPassengers({
-      ...passengers,
-      [seatId]: passenger,
-    });
-    // Update primary contact info if it's the first passenger
-    if (selectedSeatIds[0] === seatId) {
-      setPassengerInfo({
-        name: passenger.name,
-        phone: passenger.phone || '',
-        email: passenger.email || '',
-      });
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -716,7 +701,8 @@ const Booking = () => {
                     )}
                   </Button>
                 </form>
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Sidebar - Booking Summary */}
