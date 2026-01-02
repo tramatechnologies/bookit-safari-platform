@@ -50,6 +50,8 @@ export const schedulesApi = {
       p_departure_date: filters.date || new Date().toISOString().split('T')[0],
       p_min_price: filters.minPrice || null,
       p_max_price: filters.maxPrice || null,
+      p_departure_region_id: filters.fromRegionId || null,
+      p_destination_region_id: filters.toRegionId || null,
     });
 
     if (error) throw error;
