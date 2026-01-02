@@ -51,8 +51,8 @@ const Booking = () => {
   // Get bus layout type
   const seatLayoutType: SeatLayoutType = (schedule?.bus?.seat_layout as SeatLayoutType) || 'layout1';
 
-  // Store seat numbers along with IDs
-  const [seatIdToNumberMap, setSeatIdToNumberMap] = useState<Map<string, number>>(new Map());
+  // Store seat numbers along with IDs (using object instead of Map for stable references)
+  const [seatIdToNumberMap, setSeatIdToNumberMap] = useState<Record<string, number>>({});
 
   // Define these before useMemo to avoid initialization order issues
   const totalSeats = schedule?.bus?.total_seats || 0;
@@ -61,7 +61,7 @@ const Booking = () => {
   // Convert seat IDs to seat numbers for booking
   const selectedSeatNumbers = useMemo(() => {
     return selectedSeatIds
-      .map(id => seatIdToNumberMap.get(id) || getSeatNumberFromId(id, seatLayoutType, totalSeats))
+      .map(id => seatIdToNumberMap[id] || getSeatNumberFromId(id, seatLayoutType, totalSeats))
       .filter(n => n > 0);
   }, [selectedSeatIds, seatIdToNumberMap, seatLayoutType, totalSeats]);
 
@@ -90,8 +90,8 @@ const Booking = () => {
     if (selectedSeatIds.includes(seatId)) {
       // Deselect seat
       setSelectedSeatIds(selectedSeatIds.filter((id) => id !== seatId));
-      const newMap = new Map(seatIdToNumberMap);
-      newMap.delete(seatId);
+      const newMap = { ...seatIdToNumberMap };
+      delete newMap[seatId];
       setSeatIdToNumberMap(newMap);
       // Remove passenger info for deselected seat
       const newPassengers = { ...passengers };
@@ -100,9 +100,7 @@ const Booking = () => {
     } else {
       if (selectedSeatIds.length < numberOfPassengers) {
         setSelectedSeatIds([...selectedSeatIds, seatId]);
-        const newMap = new Map(seatIdToNumberMap);
-        newMap.set(seatId, seatNumber);
-        setSeatIdToNumberMap(newMap);
+        setSeatIdToNumberMap({ ...seatIdToNumberMap, [seatId]: seatNumber });
         // Initialize passenger info for new seat
         if (!passengers[seatId]) {
           setPassengers({
@@ -147,7 +145,7 @@ const Booking = () => {
     // Clear selections if new count is less than current selections
     if (count < selectedSeatIds.length) {
       setSelectedSeatIds([]);
-      setSeatIdToNumberMap(new Map());
+      setSeatIdToNumberMap({});
       // Clear passenger info for removed seats
       const newPassengers: Record<string, PassengerInfo> = {};
       selectedSeatIds.slice(0, count).forEach((seatId) => {
