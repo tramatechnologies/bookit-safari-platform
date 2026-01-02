@@ -37,12 +37,15 @@ const Booking = () => {
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]); // Seat IDs like ["A1", "B2"]
   const [boardingPoint, setBoardingPoint] = useState<string>('');
   const [dropOffPoint, setDropOffPoint] = useState<string>('');
+  const [passengers, setPassengers] = useState<Record<string, PassengerInfo>>({});
+  const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
+  
+  // Legacy passenger info for backward compatibility (primary contact)
   const [passengerInfo, setPassengerInfo] = useState({
     name: '',
     phone: '',
     email: user?.email || '',
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Get bus layout type
   const seatLayoutType: SeatLayoutType = (schedule?.bus?.seat_layout as SeatLayoutType) || 'layout1';
@@ -84,16 +87,34 @@ const Booking = () => {
 
   const handleSeatClick = (seatId: string, seatNumber: number) => {
     if (selectedSeatIds.includes(seatId)) {
+      // Deselect seat
       setSelectedSeatIds(selectedSeatIds.filter((id) => id !== seatId));
       const newMap = new Map(seatIdToNumberMap);
       newMap.delete(seatId);
       setSeatIdToNumberMap(newMap);
+      // Remove passenger info for deselected seat
+      const newPassengers = { ...passengers };
+      delete newPassengers[seatId];
+      setPassengers(newPassengers);
     } else {
       if (selectedSeatIds.length < numberOfPassengers) {
         setSelectedSeatIds([...selectedSeatIds, seatId]);
         const newMap = new Map(seatIdToNumberMap);
         newMap.set(seatId, seatNumber);
         setSeatIdToNumberMap(newMap);
+        // Initialize passenger info for new seat
+        if (!passengers[seatId]) {
+          setPassengers({
+            ...passengers,
+            [seatId]: {
+              name: '',
+              gender: '',
+              category: '',
+              phone: selectedSeatIds.length === 0 ? passengerInfo.phone : undefined,
+              email: selectedSeatIds.length === 0 ? passengerInfo.email : undefined,
+            },
+          });
+        }
       } else {
         toast({
           title: 'Seat Limit Reached',
@@ -104,6 +125,21 @@ const Booking = () => {
     }
   };
 
+  const handlePassengerChange = (seatId: string, passenger: PassengerInfo) => {
+    setPassengers({
+      ...passengers,
+      [seatId]: passenger,
+    });
+    // Update primary contact info if it's the first passenger
+    if (selectedSeatIds[0] === seatId) {
+      setPassengerInfo({
+        name: passenger.name,
+        phone: passenger.phone || '',
+        email: passenger.email || '',
+      });
+    }
+  };
+
   // Reset seat selection when passenger count changes
   const handlePassengerCountChange = (count: number) => {
     setNumberOfPassengers(count);
@@ -111,6 +147,29 @@ const Booking = () => {
     if (count < selectedSeatIds.length) {
       setSelectedSeatIds([]);
       setSeatIdToNumberMap(new Map());
+      // Clear passenger info for removed seats
+      const newPassengers: Record<string, PassengerInfo> = {};
+      selectedSeatIds.slice(0, count).forEach((seatId) => {
+        if (passengers[seatId]) {
+          newPassengers[seatId] = passengers[seatId];
+        }
+      });
+      setPassengers(newPassengers);
+    }
+  };
+
+  const handlePassengerChange = (seatId: string, passenger: PassengerInfo) => {
+    setPassengers({
+      ...passengers,
+      [seatId]: passenger,
+    });
+    // Update primary contact info if it's the first passenger
+    if (selectedSeatIds[0] === seatId) {
+      setPassengerInfo({
+        name: passenger.name,
+        phone: passenger.phone || '',
+        email: passenger.email || '',
+      });
     }
   };
 
@@ -139,21 +198,96 @@ const Booking = () => {
 
     if (!scheduleId || !user) return;
 
-    // Validate with Zod
+    // Validate all passengers have required information
+    const passengerErrors: Record<string, Record<string, string>> = {};
+    let hasErrors = false;
+
+    selectedSeatIds.forEach((seatId) => {
+      const passenger = passengers[seatId];
+      const seatErrors: Record<string, string> = {};
+
+      if (!passenger) {
+        seatErrors.name = 'Passenger information is required';
+        hasErrors = true;
+      } else {
+        if (!passenger.name || passenger.name.length < 2) {
+          seatErrors.name = 'Name must be at least 2 characters';
+          hasErrors = true;
+        }
+        if (!passenger.gender) {
+          seatErrors.gender = 'Please select a gender';
+          hasErrors = true;
+        }
+        if (!passenger.category) {
+          seatErrors.category = 'Please select a category';
+          hasErrors = true;
+        }
+        if (passenger.category === 'child' && (!passenger.age || passenger.age < 0 || passenger.age > 17)) {
+          seatErrors.age = 'Age is required for children (0-17 years)';
+          hasErrors = true;
+        }
+        if (selectedSeatIds[0] === seatId && (!passenger.phone || !passenger.phone.match(/^\+?[0-9]{10,15}$/))) {
+          seatErrors.phone = 'Please enter a valid phone number';
+          hasErrors = true;
+        }
+        if (selectedSeatIds[0] === seatId && passenger.email && !passenger.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+          seatErrors.email = 'Please enter a valid email address';
+          hasErrors = true;
+        }
+      }
+
+      if (Object.keys(seatErrors).length > 0) {
+        passengerErrors[seatId] = seatErrors;
+      }
+    });
+
+    if (hasErrors) {
+      setErrors(passengerErrors);
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required passenger information.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate with Zod (using first passenger as primary contact)
+    const primaryPassenger = passengers[selectedSeatIds[0]];
+    const passengerList = selectedSeatIds.map((seatId) => {
+      const p = passengers[seatId];
+      return {
+        name: p.name,
+        gender: p.gender as 'male' | 'female' | 'other' | 'prefer_not_to_say',
+        category: p.category as 'adult' | 'student' | 'child',
+        age: p.age,
+        phone: p.phone,
+        email: p.email,
+      };
+    });
+
     const result = createBookingSchema.safeParse({
       scheduleId,
-      passengerName: passengerInfo.name,
-      passengerPhone: passengerInfo.phone,
-      passengerEmail: passengerInfo.email || '',
+      passengerName: primaryPassenger.name,
+      passengerPhone: primaryPassenger.phone || '',
+      passengerEmail: primaryPassenger.email || '',
       seatNumbers: selectedSeatNumbers,
+      passengers: passengerList,
     });
 
     if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
+      const fieldErrors: Record<string, Record<string, string>> = {};
       result.error.errors.forEach((err) => {
-        if (err.path[0]) {
-          const field = err.path[0].toString();
-          fieldErrors[field] = err.message;
+        if (err.path.length > 0) {
+          const path = err.path;
+          if (path[0] === 'passengers' && path.length > 1 && typeof path[1] === 'number') {
+            const seatIndex = path[1];
+            const seatId = selectedSeatIds[seatIndex];
+            if (seatId) {
+              if (!fieldErrors[seatId]) fieldErrors[seatId] = {};
+              const field = path[2]?.toString() || 'name';
+              fieldErrors[seatId][field] = err.message;
+            }
+          }
         }
       });
       setErrors(fieldErrors);
@@ -166,18 +300,33 @@ const Booking = () => {
     }
 
     try {
+      // Prepare passenger data
+      const passengerData = selectedSeatIds.map((seatId, index) => {
+        const passenger = passengers[seatId];
+        return {
+          seat_number: selectedSeatNumbers[index],
+          name: passenger.name,
+          gender: passenger.gender as 'male' | 'female' | 'other' | 'prefer_not_to_say',
+          category: passenger.category as 'adult' | 'student' | 'child',
+          age: passenger.age,
+          phone: index === 0 ? passenger.phone : undefined, // Only first passenger needs phone
+          email: index === 0 ? passenger.email : undefined, // Only first passenger needs email
+        };
+      });
+
       const booking = await createBooking.mutateAsync({
         schedule_id: scheduleId,
         user_id: user.id,
-        passenger_name: passengerInfo.name,
-        passenger_phone: passengerInfo.phone,
-        passenger_email: passengerInfo.email || null,
+        passenger_name: primaryPassenger.name,
+        passenger_phone: primaryPassenger.phone || '',
+        passenger_email: primaryPassenger.email || null,
         seat_numbers: selectedSeatNumbers,
         total_seats: selectedSeatNumbers.length,
         total_price_tzs: totalPrice,
         status: 'pending',
         boarding_point: boardingPoint || null,
         drop_off_point: dropOffPoint || null,
+        passengers: passengerData,
       } as any); // Type assertion needed until types are regenerated
 
       toast({
@@ -458,7 +607,7 @@ const Booking = () => {
                         {selectedSeatIds.map((seatId) => (
                           <span
                             key={seatId}
-                            className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-medium"
+                            className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-medium"
                           >
                             Seat {seatId}
                           </span>
@@ -522,60 +671,30 @@ const Booking = () => {
               </div>
 
               {/* Passenger Information */}
-              <div className="bg-card rounded-2xl border border-border p-6">
-                <h2 className="font-display text-2xl font-bold mb-4">Passenger Information</h2>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
-                    <Input
-                      id="name"
-                      value={passengerInfo.name}
-                      onChange={(e) =>
-                        setPassengerInfo({ ...passengerInfo, name: e.target.value })
-                      }
-                      placeholder="Enter your full name"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={passengerInfo.phone}
-                      onChange={(e) => {
-                        setPassengerInfo({ ...passengerInfo, phone: e.target.value });
-                        if (errors.passengerPhone) setErrors({ ...errors, passengerPhone: '' });
-                      }}
-                      className={errors.passengerPhone ? 'border-destructive' : ''}
-                      placeholder="Enter your phone number"
-                      required
-                      disabled={createBooking.isPending}
-                    />
-                    {errors.passengerPhone && (
-                      <p className="text-xs text-destructive mt-1">{errors.passengerPhone}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email (Optional)</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={passengerInfo.email}
-                      onChange={(e) => {
-                        setPassengerInfo({ ...passengerInfo, email: e.target.value });
-                        if (errors.passengerEmail) setErrors({ ...errors, passengerEmail: '' });
-                      }}
-                      className={errors.passengerEmail ? 'border-destructive' : ''}
-                      placeholder="Enter your email address (optional)"
-                      disabled={createBooking.isPending}
-                    />
-                    {errors.passengerEmail && (
-                      <p className="text-xs text-destructive mt-1">{errors.passengerEmail}</p>
-                    )}
-                  </div>
+              {selectedSeatIds.length > 0 && (
+                <div className="bg-card rounded-2xl border border-border p-6">
+                  <h2 className="font-display text-2xl font-bold mb-4">Passenger Information</h2>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Please provide details for each passenger. The first passenger's contact information will be used for booking confirmation.
+                  </p>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {selectedSeatIds.map((seatId, index) => (
+                      <PassengerForm
+                        key={seatId}
+                        passengerNumber={index + 1}
+                        seatId={seatId}
+                        passenger={passengers[seatId] || {
+                          name: '',
+                          gender: '',
+                          category: '',
+                          phone: index === 0 ? passengerInfo.phone : undefined,
+                          email: index === 0 ? passengerInfo.email : undefined,
+                        }}
+                        onChange={(passenger) => handlePassengerChange(seatId, passenger)}
+                        canRemove={selectedSeatIds.length > 1 && index > 0}
+                        errors={errors[seatId] || {}}
+                      />
+                    ))}
 
                   <Button
                     type="submit"

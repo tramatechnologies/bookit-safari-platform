@@ -133,15 +133,52 @@ export const bookingsApi = {
   },
 
   // Create booking
-  async createBooking(booking: BookingInsert): Promise<Booking> {
-    const { data, error } = await supabase
+  async createBooking(booking: BookingInsert & { passengers?: Array<{
+    seat_number: number;
+    name: string;
+    gender: 'male' | 'female' | 'other' | 'prefer_not_to_say';
+    category: 'adult' | 'student' | 'child';
+    age?: number;
+    phone?: string;
+    email?: string;
+  }> }): Promise<Booking> {
+    const { passengers, ...bookingData } = booking;
+    
+    // Create booking first
+    const { data: bookingResult, error: bookingError } = await supabase
       .from('bookings')
-      .insert(booking)
+      .insert(bookingData)
       .select()
       .single();
 
-    if (error) throw error;
-    return data;
+    if (bookingError) throw bookingError;
+    if (!bookingResult) throw new Error('Failed to create booking');
+
+    // Create passenger records if provided
+    if (passengers && passengers.length > 0) {
+      const passengerRecords = passengers.map((p) => ({
+        booking_id: bookingResult.id,
+        seat_number: p.seat_number,
+        name: p.name,
+        gender: p.gender,
+        category: p.category,
+        age: p.age || null,
+        phone: p.phone || null,
+        email: p.email || null,
+      }));
+
+      const { error: passengersError } = await supabase
+        .from('passengers')
+        .insert(passengerRecords);
+
+      if (passengersError) {
+        // If passenger creation fails, try to delete the booking
+        await supabase.from('bookings').delete().eq('id', bookingResult.id);
+        throw passengersError;
+      }
+    }
+
+    return bookingResult;
   },
 
   // Cancel booking
