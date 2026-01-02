@@ -43,13 +43,22 @@ const OperatorDashboard = () => {
         startDate.setMonth(today.getMonth() - 1);
       }
 
-      // Get routes for this operator
-      const { data: routes } = await supabase
-        .from('routes')
-        .select('id')
-        .eq('operator_id', operatorId);
+      // Get routes for this operator using database function
+      const { data: routesData, error: routesError } = await supabase.rpc('get_operator_routes', {
+        p_operator_id: operatorId,
+      });
 
-      const routeIds = routes?.map((r) => r.id) || [];
+      if (routesError) {
+        console.error('Error fetching routes:', routesError);
+        return {
+          bookings: 0,
+          revenue: 0,
+          buses: 0,
+          schedules: 0,
+        };
+      }
+
+      const routeIds = routesData?.map((r: any) => r.id) || [];
 
       if (routeIds.length === 0) {
         return {
@@ -60,51 +69,57 @@ const OperatorDashboard = () => {
         };
       }
 
-      // Get schedules for these routes
-      const { data: schedules } = await supabase
-        .from('schedules')
-        .select('id')
-        .in('route_id', routeIds);
+      // Get schedules for these routes using database function
+      const { data: schedulesData, error: schedulesError } = await supabase.rpc('get_operator_schedules_by_routes', {
+        p_route_ids: routeIds,
+      });
 
-      const scheduleIds = schedules?.map((s) => s.id) || [];
+      if (schedulesError) {
+        console.error('Error fetching schedules:', schedulesError);
+        return {
+          bookings: 0,
+          revenue: 0,
+          buses: 0,
+          schedules: 0,
+        };
+      }
 
-      const [bookingsRes, revenueRes, busesRes] = await Promise.all([
-        supabase
-          .from('bookings')
-          .select('id', { count: 'exact', head: true })
-          .in('schedule_id', scheduleIds)
-          .gte('created_at', startDate.toISOString()),
-        supabase
-          .from('payments')
-          .select('amount_tzs')
-          .eq('status', 'completed')
-          .gte('created_at', startDate.toISOString())
-          .in(
-            'booking_id',
-            scheduleIds.length > 0
-              ? (
-                  await supabase
-                    .from('bookings')
-                    .select('id')
-                    .in('schedule_id', scheduleIds)
-                ).data?.map((b) => b.id) || []
-              : []
-          ),
-        supabase
-          .from('buses')
-          .select('id', { count: 'exact', head: true })
-          .eq('operator_id', operatorId),
+      const scheduleIds = schedulesData?.map((s: any) => s.id) || [];
+
+      // Get booking IDs for these schedules
+      const { data: bookingIdsData } = await supabase.rpc('get_booking_ids_for_schedules', {
+        p_schedule_ids: scheduleIds,
+      });
+
+      const bookingIds = bookingIdsData?.map((b: any) => b.id) || [];
+
+      const [bookingsCount, revenueData, busesCount] = await Promise.all([
+        scheduleIds.length > 0
+          ? supabase.rpc('get_bookings_count_for_schedules', {
+              p_schedule_ids: scheduleIds,
+              p_start_date: startDate.toISOString(),
+            })
+          : Promise.resolve({ data: 0, error: null }),
+        bookingIds.length > 0
+          ? supabase.rpc('get_payments_for_bookings', {
+              p_booking_ids: bookingIds,
+              p_start_date: startDate.toISOString(),
+            })
+          : Promise.resolve({ data: [], error: null }),
+        supabase.rpc('get_operator_buses_count', {
+          p_operator_id: operatorId,
+        }),
       ]);
 
-      const totalRevenue = revenueRes.data?.reduce(
-        (sum, payment) => sum + Number(payment.amount_tzs),
+      const totalRevenue = revenueData.data?.reduce(
+        (sum: number, payment: any) => sum + Number(payment.amount_tzs || 0),
         0
       ) || 0;
 
       return {
-        bookings: bookingsRes.count || 0,
+        bookings: bookingsCount.data || 0,
         revenue: totalRevenue,
-        buses: busesRes.count || 0,
+        buses: busesCount.data || 0,
         schedules: scheduleIds.length,
       };
     },
