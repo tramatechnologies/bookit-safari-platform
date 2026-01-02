@@ -405,7 +405,11 @@ const Booking = () => {
                 </div>
 
                 <p className="text-sm text-muted-foreground mb-6">
-                  Click on a seat to select it
+                  {selectedSeatIds.length === 0
+                    ? `Click on ${numberOfPassengers} seat${numberOfPassengers > 1 ? 's' : ''} to select ${numberOfPassengers === 1 ? 'it' : 'them'}`
+                    : selectedSeatIds.length < numberOfPassengers
+                    ? `Select ${numberOfPassengers - selectedSeatIds.length} more seat${numberOfPassengers - selectedSeatIds.length > 1 ? 's' : ''}`
+                    : 'All seats selected. You can click on a seat again to deselect it.'}
                 </p>
 
                 {/* Seat Map */}
@@ -413,15 +417,15 @@ const Booking = () => {
                   {/* Legend */}
                   <div className="flex items-center gap-6 text-sm mb-6">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border-2 border-gray-300 bg-gray-100" />
+                      <div className="w-8 h-8 rounded border border-gray-300 bg-white" />
                       <span className="text-muted-foreground">Available</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border-2 border-red-500 bg-red-500" />
+                      <div className="w-8 h-8 rounded border border-green-500 bg-green-500" />
                       <span className="text-muted-foreground">Selected</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border-2 border-gray-400 bg-gray-300 opacity-50" />
+                      <div className="w-8 h-8 rounded border border-red-500 bg-red-500 opacity-75" />
                       <span className="text-muted-foreground">Unavailable</span>
                     </div>
                   </div>
@@ -440,7 +444,7 @@ const Booking = () => {
                   </div>
 
                   {selectedSeatIds.length > 0 && (
-                    <div className="mt-4 p-4 bg-red-500/10 rounded-lg">
+                    <div className="mt-4 p-4 bg-green-500/10 rounded-lg border border-green-500/20">
                       <p className="text-sm font-medium mb-2">SEAT SELECTION</p>
                       <p className="text-xs text-muted-foreground mb-2">
                         Seats selected: {selectedSeatIds.length} / {numberOfPassengers}
