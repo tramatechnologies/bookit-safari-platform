@@ -6,12 +6,16 @@ type Schedule = Database['public']['Tables']['schedules']['Row'];
 export interface ScheduleWithDetails extends Schedule {
   route: {
     id: string;
+    departure_region_id: string | null;
+    destination_region_id: string | null;
     departure_region: { id: string; name: string; code: string } | null;
     destination_region: { id: string; name: string; code: string } | null;
     departure_terminal: string | null;
     arrival_terminal: string | null;
     duration_hours: number | null;
     distance_km: number | null;
+    operator_id: string | null;
+    operator?: { id: string; company_name: string; status: string } | null;
   } | null;
   bus: {
     id: string;
@@ -46,8 +50,8 @@ export const schedulesApi = {
         *,
         route:routes(
           id,
-          departure_region:regions!routes_departure_region_id_fkey(id, name, code),
-          destination_region:regions!routes_destination_region_id_fkey(id, name, code),
+          departure_region_id,
+          destination_region_id,
           departure_terminal,
           arrival_terminal,
           duration_hours,
@@ -135,6 +139,52 @@ export const schedulesApi = {
       return [];
     }
     
+    // Get region IDs and fetch regions separately
+    const regionIds = [...new Set(
+      results
+        .flatMap((s) => [
+          s.route?.departure_region_id,
+          s.route?.destination_region_id,
+        ])
+        .filter(Boolean) as string[]
+    )];
+    
+    let regionsMap = new Map<string, { id: string; name: string; code: string }>();
+    if (regionIds.length > 0) {
+      const { data: regions } = await supabase
+        .from('regions')
+        .select('id, name, code')
+        .in('id', regionIds);
+      
+      if (regions) {
+        regions.forEach((r) => {
+          regionsMap.set(r.id, r);
+        });
+      }
+    }
+    
+    // Add region information to results
+    results = results.map((schedule) => {
+      const route = schedule.route;
+      if (!route) return schedule;
+      
+      const departureRegion = route.departure_region_id
+        ? regionsMap.get(route.departure_region_id)
+        : null;
+      const destinationRegion = route.destination_region_id
+        ? regionsMap.get(route.destination_region_id)
+        : null;
+      
+      return {
+        ...schedule,
+        route: {
+          ...route,
+          departure_region: departureRegion,
+          destination_region: destinationRegion,
+        },
+      } as ScheduleWithDetails;
+    });
+    
     // Filter by route regions if specified (application layer filtering)
     if (filters.fromRegionId || filters.toRegionId) {
       results = results.filter((schedule) => {
@@ -142,12 +192,12 @@ export const schedulesApi = {
         if (!route) return false;
         
         if (filters.fromRegionId) {
-          const departureRegionId = route.departure_region?.id;
+          const departureRegionId = route.departure_region?.id || route.departure_region_id;
           if (departureRegionId !== filters.fromRegionId) return false;
         }
         
         if (filters.toRegionId) {
-          const destinationRegionId = route.destination_region?.id;
+          const destinationRegionId = route.destination_region?.id || route.destination_region_id;
           if (destinationRegionId !== filters.toRegionId) return false;
         }
         
