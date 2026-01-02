@@ -45,9 +45,10 @@ export const schedulesApi = {
   // Search schedules
   async searchSchedules(filters: SearchFilters): Promise<ScheduleWithDetails[]> {
     // Fetch schedules without nested selects to avoid RLS issues
+    // Select specific columns instead of * to avoid potential RLS issues
     let query = supabase
       .from('schedules')
-      .select('*')
+      .select('id, route_id, bus_id, departure_date, departure_time, arrival_time, price_tzs, available_seats, is_active, created_at, updated_at')
       .eq('is_active', true)
       .gte('departure_date', filters.date || new Date().toISOString().split('T')[0]);
 
