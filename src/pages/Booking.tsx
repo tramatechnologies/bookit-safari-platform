@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { SeatLayout, type SeatLayoutType, getSeatNumberFromId } from '@/components/SeatLayout';
 import { BookingSummary } from '@/components/BookingSummary';
+import { PassengerForm, type PassengerInfo } from '@/components/PassengerForm';
 import { useSchedule, useAvailableSeats, useBookedSeats } from '@/hooks/use-schedules';
 import { useCreateBooking } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
