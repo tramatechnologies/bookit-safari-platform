@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { Calendar, Ticket, User, Search, LogOut, Home, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Ticket, User, Search, LogOut, Home, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -73,10 +73,27 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-muted/30 flex">
+      {/* Toggle Button - Outside Sidebar */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className={`fixed top-4 z-50 h-10 w-10 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ${
+          isCollapsed ? 'left-24' : 'left-[17rem]'
+        } bg-card border border-border hover:bg-muted`}
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {isCollapsed ? (
+          <PanelLeftOpen className="h-5 w-5 text-foreground" />
+        ) : (
+          <PanelLeftClose className="h-5 w-5 text-foreground" />
+        )}
+      </Button>
+
       {/* Sidebar */}
-      <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border flex flex-col fixed h-screen transition-all duration-300`}>
+      <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border flex flex-col fixed h-screen transition-all duration-300 z-40`}>
         {/* Logo */}
-        <div className={`p-6 border-b border-border flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+        <div className={`p-6 border-b border-border flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
           <Link to="/" className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
             <img 
               src="/images/logo.png" 
@@ -89,19 +106,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </span>
             )}
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
         </div>
 
         {/* Navigation */}
@@ -220,7 +224,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
+      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'} pt-16`}>
         {children}
       </main>
     </div>
