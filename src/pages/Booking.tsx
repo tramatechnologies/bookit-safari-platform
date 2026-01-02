@@ -109,17 +109,15 @@ const Booking = () => {
       ...prev,
       [seatId]: passenger,
     }));
-    // Update primary contact info if it's the first passenger
-    setSelectedSeatIds((prevIds) => {
-      if (prevIds[0] === seatId) {
-        setPassengerInfo({
-          name: passenger.name,
-          phone: passenger.phone || '',
-          email: passenger.email || '',
-        });
-      }
-      return prevIds;
-    });
+    // Update primary contact info if it's the first passenger (check outside setter to avoid closure issues)
+    // Use a ref-like pattern by checking the current selectedSeatIds
+    if (selectedSeatIds.length > 0 && selectedSeatIds[0] === seatId) {
+      setPassengerInfo({
+        name: passenger.name,
+        phone: passenger.phone || '',
+        email: passenger.email || '',
+      });
+    }
   };
 
   // Reset seat selection when passenger count changes
