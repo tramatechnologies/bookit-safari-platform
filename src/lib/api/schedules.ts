@@ -69,10 +69,10 @@ export const schedulesApi = {
 
     // Filter by route regions
     if (filters.fromRegionId || filters.toRegionId) {
-      // Get routes that match the region criteria
+      // Get routes that match the region criteria (only select id to avoid RLS issues)
       let routeQuery = supabase
         .from('routes')
-        .select('id, operator_id')
+        .select('id')
         .eq('is_active', true);
 
       if (filters.fromRegionId) {
@@ -88,76 +88,10 @@ export const schedulesApi = {
         return [];
       }
 
-      // Get operator IDs from routes and check which are approved
-      const operatorIds = [...new Set(routes.map((r) => r.operator_id).filter(Boolean))];
+      const routeIds = routes.map((r) => r.id);
       
-      if (operatorIds.length === 0) {
-        return [];
-      }
-
-      // Check which operators are approved (using a simple query that should work with RLS)
-      const { data: operators } = await supabase
-        .from('bus_operators')
-        .select('id, status')
-        .in('id', operatorIds);
-
-      const approvedOperatorIds = operators
-        ?.filter((op) => op.status === 'approved')
-        .map((op) => op.id) || [];
-
-      if (approvedOperatorIds.length === 0) {
-        return [];
-      }
-
-      // Filter routes to only include those with approved operators
-      const approvedRouteIds = routes
-        .filter((r) => r.operator_id && approvedOperatorIds.includes(r.operator_id))
-        .map((r) => r.id);
-      
-      if (approvedRouteIds.length > 0) {
-        query = query.in('route_id', approvedRouteIds);
-      } else {
-        return [];
-      }
-    } else {
-      // If no region filters, get all active routes and filter by approved operators
-      const { data: routes } = await supabase
-        .from('routes')
-        .select('id, operator_id')
-        .eq('is_active', true);
-
-      if (!routes || routes.length === 0) {
-        return [];
-      }
-
-      // Get operator IDs from routes
-      const operatorIds = [...new Set(routes.map((r) => r.operator_id).filter(Boolean))];
-      
-      if (operatorIds.length === 0) {
-        return [];
-      }
-
-      // Check which operators are approved
-      const { data: operators } = await supabase
-        .from('bus_operators')
-        .select('id, status')
-        .in('id', operatorIds);
-
-      const approvedOperatorIds = operators
-        ?.filter((op) => op.status === 'approved')
-        .map((op) => op.id) || [];
-
-      if (approvedOperatorIds.length === 0) {
-        return [];
-      }
-
-      // Filter routes to only include those with approved operators
-      const approvedRouteIds = routes
-        .filter((r) => r.operator_id && approvedOperatorIds.includes(r.operator_id))
-        .map((r) => r.id);
-
-      if (approvedRouteIds.length > 0) {
-        query = query.in('route_id', approvedRouteIds);
+      if (routeIds.length > 0) {
+        query = query.in('route_id', routeIds);
       } else {
         return [];
       }
@@ -185,6 +119,7 @@ export const schedulesApi = {
     let results = (data || []) as ScheduleWithDetails[];
     
     // Filter to only include schedules from approved operators
+    // The operator information is already in the nested select
     results = results.filter((schedule) => {
       const operator = schedule.route?.operator as any;
       return operator && operator.status === 'approved';
