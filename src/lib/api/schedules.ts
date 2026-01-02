@@ -128,14 +128,20 @@ export const schedulesApi = {
     )];
     
     if (operatorIds.length > 0) {
-      // Query operators by IDs to check status
-      const { data: operators } = await supabase
-        .from('bus_operators')
-        .select('id, status, company_name')
-        .in('id', operatorIds);
+      // Query operators by IDs using database function to bypass RLS issues
+      let operators: any[] = [];
+      const { data: operatorsData, error: operatorsError } = await supabase.rpc('get_bus_operators_by_ids', {
+        p_operator_ids: operatorIds,
+      });
+      if (operatorsError) {
+        console.error('Error fetching operators:', operatorsError);
+        // Fallback to empty array
+      } else {
+        operators = operatorsData || [];
+      }
       
       const approvedOperatorIds = operators
-        ?.filter((op) => op.status === 'approved')
+        .filter((op) => op.status === 'approved')
         .map((op) => op.id) || [];
       
       // Filter to only include schedules from approved operators
