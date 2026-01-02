@@ -115,7 +115,8 @@ const AuthCallback = () => {
         setStatus('success');
         setMessage('Please verify your email to continue.');
         setTimeout(() => {
-          navigate('/auth/verify-waiting');
+          // Show message but allow access
+          navigate('/dashboard');
         }, 1500);
       }
     }

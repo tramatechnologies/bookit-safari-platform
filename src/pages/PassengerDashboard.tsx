@@ -12,12 +12,8 @@ const PassengerDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if email is not verified
-  useEffect(() => {
-    if (user && !user.email_confirmed_at) {
-      navigate('/auth/verify-waiting', { replace: true });
-    }
-  }, [user, navigate]);
+  // Email verification is handled by ProtectedRoute banner
+  // No redirect needed - user can see dashboard with verification message
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'week' | 'month'>('today');
 
   // Fetch user profile

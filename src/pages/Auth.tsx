@@ -47,10 +47,8 @@ const Auth = () => {
           if (user.email_confirmed_at) {
             const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
             navigate(from, { replace: true });
-          } else {
-            // If not verified, redirect to verification waiting page
-            navigate('/auth/verify-waiting', { replace: true });
           }
+          // If not verified, stay on auth page - user can continue browsing
         }
       }, 200);
       
@@ -118,18 +116,16 @@ const Auth = () => {
         setLoading(false);
 
         toast({
-          title: 'Account created!',
-          description: 'Please check your email to verify your account before continuing.',
+          title: 'Account created successfully!',
+          description: 'Please check your email to verify your account. You can continue browsing, but some features require email verification.',
+          duration: 5000,
         });
         
-        // Redirect to email verification waiting page immediately
-        // Use replace: true to prevent back navigation
-        // Use a longer timeout to ensure all state updates are complete
-        setTimeout(() => {
-          navigate('/auth/verify-waiting', { replace: true });
-          // Reset the flag after navigation
-          setTimeout(() => setJustSignedUp(false), 1000);
-        }, 150);
+        // Reset the flag
+        setTimeout(() => setJustSignedUp(false), 1000);
+        
+        // Stay on the auth page or redirect to home
+        // User can continue browsing but will see verification message when needed
       } else {
         // Validate with Zod
         const result = signInSchema.safeParse({

@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Calendar, Ticket, User, Search, LogOut, Home } from 'lucide-react';
+import { ReactNode, useState } from 'react';
+import { Calendar, Ticket, User, Search, LogOut, Home, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -23,6 +23,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Fetch user profile
   const { data: profile } = useQuery({
@@ -73,66 +74,105 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-muted/30 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-card border-r border-border flex flex-col fixed h-screen">
+      <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-card border-r border-border flex flex-col fixed h-screen transition-all duration-300`}>
         {/* Logo */}
-        <div className="p-6 border-b border-border">
-          <Link to="/" className="flex items-center gap-2">
+        <div className={`p-6 border-b border-border flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+          <Link to="/" className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
             <img 
               src="/images/logo.png" 
               alt="BookitSafari Logo" 
               className="h-8 w-auto object-contain"
             />
-            <span className="font-display text-lg font-bold text-foreground">
-              Bookit<span className="text-amber">Safari</span>
-            </span>
+            {!isCollapsed && (
+              <span className="font-display text-lg font-bold text-foreground">
+                Bookit<span className="text-amber">Safari</span>
+              </span>
+            )}
           </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">
           <Link
             to="/dashboard"
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg transition-colors group relative ${
               isActive('/dashboard')
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={isCollapsed ? 'Dashboard' : ''}
           >
-            <Home className="w-5 h-5" />
-            Dashboard
+            <Home className="w-5 h-5 flex-shrink-0" />
+            {!isCollapsed && <span>Dashboard</span>}
+            {isCollapsed && (
+              <span className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-sm rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                Dashboard
+              </span>
+            )}
           </Link>
           <Link
             to="/bookings"
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg transition-colors group relative ${
               isActive('/bookings')
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={isCollapsed ? 'My Bookings' : ''}
           >
-            <Ticket className="w-5 h-5" />
-            My Bookings
+            <Ticket className="w-5 h-5 flex-shrink-0" />
+            {!isCollapsed && <span>My Bookings</span>}
+            {isCollapsed && (
+              <span className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-sm rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                My Bookings
+              </span>
+            )}
           </Link>
           <Link
             to="/search"
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg transition-colors group relative ${
               isActive('/search')
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={isCollapsed ? 'Book a Trip' : ''}
           >
-            <Search className="w-5 h-5" />
-            Book a Trip
+            <Search className="w-5 h-5 flex-shrink-0" />
+            {!isCollapsed && <span>Book a Trip</span>}
+            {isCollapsed && (
+              <span className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-sm rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                Book a Trip
+              </span>
+            )}
           </Link>
           <Link
             to="/profile"
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+            className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg transition-colors group relative ${
               isActive('/profile')
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
+            title={isCollapsed ? 'Profile' : ''}
           >
-            <User className="w-5 h-5" />
-            Profile
+            <User className="w-5 h-5 flex-shrink-0" />
+            {!isCollapsed && <span>Profile</span>}
+            {isCollapsed && (
+              <span className="absolute left-full ml-2 px-2 py-1 bg-popover text-popover-foreground text-sm rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">
+                Profile
+              </span>
+            )}
           </Link>
         </nav>
 
@@ -140,16 +180,18 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="p-4 border-t border-border">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="w-full justify-start gap-3 h-auto p-3">
-                <Avatar className="h-8 w-8">
+              <Button variant="ghost" className={`w-full ${isCollapsed ? 'justify-center' : 'justify-start'} gap-3 h-auto p-3`}>
+                <Avatar className="h-8 w-8 flex-shrink-0">
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {getInitials(profile?.full_name)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-medium">{profile?.full_name || 'User'}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                </div>
+                {!isCollapsed && (
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -178,7 +220,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 ml-64">
+      <main className={`flex-1 transition-all duration-300 ${isCollapsed ? 'ml-20' : 'ml-64'}`}>
         {children}
       </main>
     </div>
