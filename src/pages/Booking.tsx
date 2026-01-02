@@ -33,6 +33,7 @@ const Booking = () => {
   const { data: bookedSeats = [] } = useBookedSeats(scheduleId || '', departureDate);
   const createBooking = useCreateBooking();
 
+  const [numberOfPassengers, setNumberOfPassengers] = useState<number>(1);
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]); // Seat IDs like ["A1", "B2"]
   const [boardingPoint, setBoardingPoint] = useState<string>('');
   const [dropOffPoint, setDropOffPoint] = useState<string>('');
@@ -88,7 +89,7 @@ const Booking = () => {
       newMap.delete(seatId);
       setSeatIdToNumberMap(newMap);
     } else {
-      if (selectedSeatIds.length < 5) {
+      if (selectedSeatIds.length < numberOfPassengers) {
         setSelectedSeatIds([...selectedSeatIds, seatId]);
         const newMap = new Map(seatIdToNumberMap);
         newMap.set(seatId, seatNumber);
@@ -96,10 +97,20 @@ const Booking = () => {
       } else {
         toast({
           title: 'Kikomo cha Vitanda',
-          description: 'Unaweza kuchagua hadi vitanda 5 kwa rejista moja.',
+          description: `Unaweza kuchagua vitanda ${numberOfPassengers} tu kwa abiria ${numberOfPassengers}.`,
           variant: 'destructive',
         });
       }
+    }
+  };
+
+  // Reset seat selection when passenger count changes
+  const handlePassengerCountChange = (count: number) => {
+    setNumberOfPassengers(count);
+    // Clear selections if new count is less than current selections
+    if (count < selectedSeatIds.length) {
+      setSelectedSeatIds([]);
+      setSeatIdToNumberMap(new Map());
     }
   };
 
@@ -111,6 +122,16 @@ const Booking = () => {
       toast({
         title: 'Hakuna Vitanda Vilivyochaguliwa',
         description: 'Tafadhali chagua angalau kiti kimoja.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate seat count matches passenger count
+    if (selectedSeatNumbers.length !== numberOfPassengers) {
+      toast({
+        title: 'Idadi ya Vitanda Haifanani',
+        description: `Umechagua vitanda ${selectedSeatNumbers.length} lakini una abiria ${numberOfPassengers}. Tafadhali chagua vitanda ${numberOfPassengers}.`,
         variant: 'destructive',
       });
       return;
@@ -342,6 +363,31 @@ const Booking = () => {
                   </div>
                 </div>
 
+                {/* Passenger Count Selector */}
+                <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+                  <Label htmlFor="passenger_count" className="text-sm font-medium mb-2 block">
+                    Idadi ya Abiria *
+                  </Label>
+                  <Select
+                    value={numberOfPassengers.toString()}
+                    onValueChange={(value) => handlePassengerCountChange(parseInt(value))}
+                  >
+                    <SelectTrigger id="passenger_count" className="w-full max-w-[200px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: Math.min(10, availableSeats) }, (_, i) => i + 1).map((count) => (
+                        <SelectItem key={count} value={count.toString()}>
+                          {count} {count === 1 ? 'Abiria' : 'Abiria'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Chagua vitanda {numberOfPassengers} {numberOfPassengers === 1 ? 'kwa abiria' : 'kwa abiria'} {numberOfPassengers}
+                  </p>
+                </div>
+
                 <p className="text-sm text-muted-foreground mb-6">
                   Chagua kiti kwa kubonyeza alama ya kiti unachohitaji
                 </p>
@@ -373,7 +419,7 @@ const Booking = () => {
                       bookedSeats={bookedSeats}
                       selectedSeats={selectedSeatIds}
                       onSeatClick={handleSeatClick}
-                      maxSelections={5}
+                      maxSelections={numberOfPassengers}
                     />
                   </div>
 
@@ -381,7 +427,12 @@ const Booking = () => {
                     <div className="mt-4 p-4 bg-red-500/10 rounded-lg">
                       <p className="text-sm font-medium mb-2">UCHAGUZ WA KITI</p>
                       <p className="text-xs text-muted-foreground mb-2">
-                        Kiti kilichochaguliwa: {selectedSeatIds.length}
+                        Vitanda vilivyochaguliwa: {selectedSeatIds.length} / {numberOfPassengers}
+                        {selectedSeatIds.length < numberOfPassengers && (
+                          <span className="text-amber-600 ml-2">
+                            (Chagua vitanda {numberOfPassengers - selectedSeatIds.length} zaidi)
+                          </span>
+                        )}
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {selectedSeatIds.map((seatId) => (
