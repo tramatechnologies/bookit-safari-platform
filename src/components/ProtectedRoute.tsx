@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,10 +12,28 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requireEmailVerification = true }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshSession } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Check if email verification status might need updating
+    if (user && requireEmailVerification && !user.email_confirmed_at) {
+      // Check if the session needs to be refreshed to get the latest email verification status
+      const checkSession = async () => {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!error && session?.user?.email_confirmed_at) {
+          // If the current session shows the email as verified, refresh the auth state
+          // This will update the user object with the correct email verification status
+          refreshSession();
+        }
+      };
+      
+      checkSession();
+    }
+  }, [user, requireEmailVerification, refreshSession]);
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

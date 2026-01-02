@@ -30,7 +30,7 @@ export const useAuth = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       // Handle user deletion or account disabled
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      if (event === 'SIGNED_OUT') {
         // Clear local state when user is signed out or deleted
         setAuthState({
           user: null,
@@ -98,12 +98,28 @@ export const useAuth = () => {
     if (error) throw error;
   };
 
+  const refreshSession = async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('Error refreshing session:', error);
+      return;
+    }
+    
+    setAuthState({
+      user: session?.user ?? null,
+      session,
+      loading: false,
+    });
+  };
+
   return {
     ...authState,
     signIn,
     signUp,
     signOut,
     resetPassword,
+    refreshSession,
   };
 };
 

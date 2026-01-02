@@ -32,7 +32,10 @@ const Booking = () => {
   const { data: availableSeats = 0 } = useAvailableSeats(scheduleId || '');
   
   // Extract departure date as a primitive string (strings are stable primitives)
-  const departureDate = schedule?.departure_time ? new Date(schedule.departure_time).toISOString().split('T')[0] : '';
+  const departureDate = schedule?.departure_time ? (() => {
+    const date = new Date(schedule.departure_time);
+    return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+  })() : '';
   const { data: bookedSeats = [] } = useBookedSeats(scheduleId || '', departureDate);
   const createBooking = useCreateBooking();
 
