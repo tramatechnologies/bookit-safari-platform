@@ -202,8 +202,13 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
         <h4 className="font-semibold mb-3">Passenger Information</h4>
         <div className="space-y-2 text-sm">
           <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <span className="text-muted-foreground">Total Passengers:</span>
+            <span className="font-medium">{selectedSeats.length}</span>
+          </div>
+          <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Name:</span>
+            <span className="text-muted-foreground">Primary Contact:</span>
             <span className="font-medium">{passengerInfo.name || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-2">
