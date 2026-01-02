@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Users, ArrowRight, X, Loader2, Bus } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ArrowRight, X, Loader2, Bus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -8,6 +8,7 @@ import { useBookings, useCancelBooking } from '@/hooks/use-bookings';
 import { formatPrice } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import { formatApiError } from '@/lib/utils/error-messages';
+import { generateETicketPDF } from '@/lib/utils/e-ticket';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ const MyBookings = () => {
   const { toast } = useToast();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState<string | null>(null);
+  const [generatingTicketId, setGeneratingTicketId] = useState<string | null>(null);
 
   const handleCancelClick = (bookingId: string) => {
     setBookingToCancel(bookingId);
@@ -49,6 +51,48 @@ const MyBookings = () => {
         description: formattedError.description,
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleDownloadTicket = async (booking: any) => {
+    if (!booking || !booking.schedule) return;
+
+    setGeneratingTicketId(booking.id);
+    try {
+      const totalAmount = Number(booking.total_price_tzs || booking.total_amount_tzs || 0);
+      await generateETicketPDF(
+        {
+          id: booking.id,
+          booking_number: booking.booking_number,
+          passenger_name: booking.passenger_name,
+          passenger_phone: booking.passenger_phone,
+          passenger_email: booking.passenger_email,
+          seat_numbers: booking.seat_numbers,
+          total_amount_tzs: totalAmount,
+          status: booking.status,
+          created_at: booking.created_at,
+        },
+        {
+          departure_date: booking.schedule.departure_date || '',
+          departure_time: booking.schedule.departure_time || '',
+          arrival_time: booking.schedule.arrival_time,
+          route: booking.schedule.route,
+          bus: booking.schedule.bus,
+        }
+      );
+      toast({
+        title: 'Ticket Downloaded',
+        description: 'Your e-ticket has been downloaded successfully.',
+      });
+    } catch (error: any) {
+      console.error('Error generating ticket:', error);
+      toast({
+        title: 'Download Failed',
+        description: error.message || 'Failed to generate ticket. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setGeneratingTicketId(null);
     }
   };
 
@@ -244,11 +288,31 @@ const MyBookings = () => {
                       {/* Actions */}
                       <div className="flex flex-col gap-2 lg:w-48">
                         {booking.status === 'confirmed' && (
-                          <Button variant="outline" size="sm" asChild>
-                            <Link to={`/booking/${booking.id}/confirmation`}>
-                              View Details
-                            </Link>
-                          </Button>
+                          <>
+                            <Button variant="outline" size="sm" asChild>
+                              <Link to={`/booking/${booking.id}/confirmation`}>
+                                View Details
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="teal-outline"
+                              size="sm"
+                              onClick={() => handleDownloadTicket(booking)}
+                              disabled={generatingTicketId === booking.id}
+                            >
+                              {generatingTicketId === booking.id ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Download Ticket
+                                </>
+                              )}
+                            </Button>
+                          </>
                         )}
                         {canCancel && (
                           <Button

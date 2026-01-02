@@ -8,10 +8,15 @@ import { useBooking } from '@/hooks/use-bookings';
 import { formatPrice } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
 import { validateUuid } from '@/lib/validations/uuid';
+import { generateETicketPDF } from '@/lib/utils/e-ticket';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const BookingConfirmation = () => {
   const { bookingId: rawBookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isGeneratingTicket, setIsGeneratingTicket] = useState(false);
   
   // Validate UUID from URL
   const bookingId = validateUuid(rawBookingId);
@@ -74,6 +79,47 @@ const BookingConfirmation = () => {
   const schedule = booking.schedule;
   // Handle both field names for compatibility (database uses total_amount_tzs)
   const totalAmount = Number((booking as any).total_price_tzs || (booking as any).total_amount_tzs || 0);
+
+  const handleDownloadTicket = async () => {
+    if (!booking || !schedule) return;
+
+    setIsGeneratingTicket(true);
+    try {
+      await generateETicketPDF(
+        {
+          id: booking.id,
+          booking_number: booking.booking_number,
+          passenger_name: booking.passenger_name,
+          passenger_phone: booking.passenger_phone,
+          passenger_email: booking.passenger_email,
+          seat_numbers: booking.seat_numbers,
+          total_amount_tzs: totalAmount,
+          status: booking.status,
+          created_at: booking.created_at,
+        },
+        {
+          departure_date: schedule.departure_date || '',
+          departure_time: schedule.departure_time || '',
+          arrival_time: schedule.arrival_time,
+          route: schedule.route,
+          bus: schedule.bus,
+        }
+      );
+      toast({
+        title: 'Ticket Downloaded',
+        description: 'Your e-ticket has been downloaded successfully.',
+      });
+    } catch (error: any) {
+      console.error('Error generating ticket:', error);
+      toast({
+        title: 'Download Failed',
+        description: error.message || 'Failed to generate ticket. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingTicket(false);
+    }
+  };
 
   return (
     <ProtectedRoute>
@@ -285,9 +331,23 @@ const BookingConfirmation = () => {
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
-            <Button variant="ghost" className="flex-1">
-              <Download className="w-4 h-4 mr-2" />
-              Download Ticket
+            <Button 
+              variant="ghost" 
+              className="flex-1"
+              onClick={handleDownloadTicket}
+              disabled={isGeneratingTicket}
+            >
+              {isGeneratingTicket ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Ticket
+                </>
+              )}
             </Button>
           </div>
 
