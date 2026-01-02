@@ -106,26 +106,33 @@ export const SeatLayout: React.FC<SeatLayoutProps> = ({
     }
   };
 
-  const SeatButton: React.FC<{ seat: Seat }> = ({ seat }) => (
-    <button
-      type="button"
-      onClick={() => handleSeatClick(seat)}
-      disabled={!seat.available}
-      className={`
-        w-8 h-8 rounded border text-[10px] font-semibold
-        transition-all duration-150 flex items-center justify-center
-        ${seat.selected
-          ? 'bg-green-500 border-green-500 text-white shadow-md'
-          : seat.available
-          ? 'bg-white border-gray-300 text-gray-700 hover:border-teal-500 hover:bg-teal-50'
-          : 'bg-red-500 border-red-500 text-white cursor-not-allowed opacity-60'
-        }
-      `}
-      title={seat.available ? `Seat ${seat.id}` : `Seat ${seat.id} - Booked`}
-    >
-      {seat.id}
-    </button>
-  );
+  const SeatButton: React.FC<{ seat: Seat }> = ({ seat }) => {
+    // Determine button classes based on seat state
+    let buttonClasses = 'w-8 h-8 rounded border text-[10px] font-semibold transition-all duration-150 flex items-center justify-center';
+    
+    if (seat.selected) {
+      // Selected: Green
+      buttonClasses += ' bg-green-500 border-green-500 text-white shadow-md';
+    } else if (seat.available) {
+      // Available: White
+      buttonClasses += ' bg-white border-gray-300 text-gray-700 hover:border-teal-500 hover:bg-teal-50';
+    } else {
+      // Not available/Booked: Red
+      buttonClasses += ' bg-red-500 border-red-500 text-white cursor-not-allowed opacity-75';
+    }
+    
+    return (
+      <button
+        type="button"
+        onClick={() => handleSeatClick(seat)}
+        disabled={!seat.available}
+        className={buttonClasses}
+        title={seat.available ? `Seat ${seat.id}` : `Seat ${seat.id} - Booked`}
+      >
+        {seat.id}
+      </button>
+    );
+  };
 
   const EmptySlot = () => <div className="w-8 h-8" />;
 
