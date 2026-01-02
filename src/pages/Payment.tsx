@@ -179,8 +179,18 @@ const Payment = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="container mx-auto px-4 py-12 pt-24 max-w-4xl">
+          <div className="text-center mb-8">
+            <div className="h-8 bg-muted animate-pulse rounded w-64 mx-auto mb-2" />
+            <div className="h-4 bg-muted animate-pulse rounded w-96 mx-auto" />
+          </div>
+          <div className="bg-card rounded-2xl border border-border p-8">
+            <div className="space-y-6">
+              <div className="h-6 bg-muted animate-pulse rounded w-48" />
+              <div className="h-32 bg-muted animate-pulse rounded" />
+              <div className="h-10 bg-muted animate-pulse rounded w-full" />
+            </div>
+          </div>
         </div>
         <Footer />
       </div>

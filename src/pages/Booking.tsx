@@ -224,8 +224,24 @@ const Booking = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="container mx-auto px-4 py-8 pt-24">
+          <div className="h-10 bg-muted animate-pulse rounded w-32 mb-6" />
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="h-8 bg-muted animate-pulse rounded w-48" />
+              <div className="bg-card rounded-2xl border border-border p-6">
+                <div className="h-64 bg-muted animate-pulse rounded" />
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-8 bg-muted animate-pulse rounded w-40" />
+              <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+                <div className="h-4 bg-muted animate-pulse rounded w-full" />
+                <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                <div className="h-10 bg-muted animate-pulse rounded w-full mt-4" />
+              </div>
+            </div>
+          </div>
         </div>
         <Footer />
       </div>

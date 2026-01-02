@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -31,6 +31,11 @@ const Header = () => {
               src="/images/logo.png" 
               alt="BookitSafari Logo" 
               className="h-10 w-auto object-contain group-hover:opacity-90 transition-opacity"
+              loading="eager"
+              onError={(e) => {
+                // Fallback if image fails to load
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
             />
             <span className="font-display text-xl font-bold text-foreground">
               Bookit<span className="text-amber">Safari</span>
@@ -72,8 +77,8 @@ const Header = () => {
           </nav>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center gap-3">
-            {user ? (
+          <div className="hidden md:flex items-center gap-3 min-w-[200px] justify-end">
+            {!loading && user ? (
               <>
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/dashboard">
@@ -96,7 +101,7 @@ const Header = () => {
                   Sign Out
                 </Button>
               </>
-            ) : (
+            ) : !loading ? (
               <>
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/auth">Sign In</Link>
@@ -105,6 +110,12 @@ const Header = () => {
                   <Link to="/auth?mode=register">Get Started</Link>
                 </Button>
               </>
+            ) : (
+              // Loading state - maintain layout
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-8 bg-muted animate-pulse rounded" />
+                <div className="w-24 h-8 bg-muted animate-pulse rounded" />
+              </div>
             )}
           </div>
 
@@ -162,7 +173,7 @@ const Header = () => {
               Help
             </Link>
             <div className="flex flex-col gap-2 pt-4 border-t border-border mt-2">
-              {user ? (
+              {!loading && user ? (
                 <>
                   <Button variant="ghost" className="justify-start" asChild>
                     <Link to="/bookings" onClick={() => setMobileMenuOpen(false)}>
@@ -180,7 +191,7 @@ const Header = () => {
                     Sign Out
                   </Button>
                 </>
-              ) : (
+              ) : !loading ? (
                 <>
                   <Button variant="ghost" className="justify-start" asChild>
                     <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
@@ -194,7 +205,7 @@ const Header = () => {
                     </Link>
                   </Button>
                 </>
-              )}
+              ) : null}
             </div>
           </nav>
         </div>

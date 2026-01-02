@@ -73,9 +73,19 @@ const Routes = () => {
       <section className="py-12">
         <div className="container mx-auto px-4">
           {isLoading ? (
-            <div className="text-center py-20">
-              <div className="inline-block w-8 h-8 border-4 border-teal border-t-transparent rounded-full animate-spin" />
-              <p className="mt-4 text-muted-foreground">Loading routes...</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-card rounded-2xl overflow-hidden shadow-md border border-border/50 animate-pulse">
+                  <div className="p-6 bg-gradient-to-br from-teal/5 to-amber/5">
+                    <div className="h-6 bg-muted rounded w-3/4 mb-2" />
+                    <div className="h-4 bg-muted rounded w-1/2" />
+                  </div>
+                  <div className="p-6 border-t border-border/50">
+                    <div className="h-5 bg-muted rounded w-24 mb-4" />
+                    <div className="h-10 bg-muted rounded w-full" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredRoutes.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

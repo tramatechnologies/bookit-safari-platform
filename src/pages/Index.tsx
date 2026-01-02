@@ -30,6 +30,11 @@ const Index = () => {
             src={heroBus}
             alt="Bus traveling through Tanzania"
             className="w-full h-full object-cover"
+            loading="eager"
+            onError={(e) => {
+              // Fallback if image fails to load
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/70 to-foreground/40" />
         </div>

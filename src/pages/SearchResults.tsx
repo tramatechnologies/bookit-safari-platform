@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/constants';
 import { useSearchSchedules } from '@/hooks/use-schedules';
 import { useRegions } from '@/hooks/use-regions';
 import { format } from 'date-fns';
+import { ScheduleCardSkeleton } from '@/components/SkeletonLoader';
 
 const amenityIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   wifi: Wifi,
@@ -155,9 +156,10 @@ const SearchResults = () => {
         <section className="py-12">
           <div className="container mx-auto px-4">
             {isLoading ? (
-              <div className="text-center py-20">
-                <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
-                <p className="text-muted-foreground">Loading routes...</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ScheduleCardSkeleton key={i} />
+                ))}
               </div>
             ) : filteredUniqueRoutes.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -295,8 +297,10 @@ const SearchResults = () => {
 
           {/* Loading State */}
           {isLoading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <ScheduleCardSkeleton key={i} />
+              ))}
             </div>
           )}
 

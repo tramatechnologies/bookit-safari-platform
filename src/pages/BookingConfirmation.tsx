@@ -51,8 +51,30 @@ const BookingConfirmation = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="container mx-auto px-4 py-12 pt-24 max-w-4xl">
+          <div className="text-center mb-8">
+            <div className="w-20 h-20 rounded-full bg-muted animate-pulse mx-auto mb-4" />
+            <div className="h-8 bg-muted animate-pulse rounded w-64 mx-auto mb-2" />
+            <div className="h-4 bg-muted animate-pulse rounded w-96 mx-auto" />
+          </div>
+          <div className="bg-card rounded-2xl border border-border p-8">
+            <div className="space-y-4">
+              <div className="h-6 bg-muted animate-pulse rounded w-48" />
+              <div className="h-4 bg-muted animate-pulse rounded w-32" />
+              <div className="grid md:grid-cols-2 gap-6 mt-6">
+                <div className="space-y-3">
+                  <div className="h-5 bg-muted animate-pulse rounded w-24" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-full" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                </div>
+                <div className="space-y-3">
+                  <div className="h-5 bg-muted animate-pulse rounded w-24" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-full" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <Footer />
       </div>

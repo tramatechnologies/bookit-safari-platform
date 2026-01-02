@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import { formatApiError } from '@/lib/utils/error-messages';
 import { generateETicketPDF } from '@/lib/utils/e-ticket';
+import { BookingCardSkeleton, Skeleton } from '@/components/SkeletonLoader';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -113,8 +114,16 @@ const MyBookings = () => {
     return (
       <ProtectedRoute>
         <DashboardLayout>
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <div className="p-6">
+            <div className="mb-8">
+              <Skeleton variant="text" className="w-48 h-8 mb-2" />
+              <Skeleton variant="text" className="w-64 h-4" />
+            </div>
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <BookingCardSkeleton key={i} />
+              ))}
+            </div>
           </div>
         </DashboardLayout>
       </ProtectedRoute>
