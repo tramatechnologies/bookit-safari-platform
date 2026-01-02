@@ -58,19 +58,15 @@ export const schedulesApi = {
     const routeIds = [...new Set(schedules.map((s) => s.route_id).filter(Boolean) as string[])];
     const busIds = [...new Set(schedules.map((s) => s.bus_id).filter(Boolean) as string[])];
 
-    // Fetch routes separately
-    const { data: routes } = await supabase
-      .from('routes')
-      .select('id, departure_region_id, destination_region_id, departure_terminal, arrival_terminal, duration_hours, distance_km, operator_id, is_active')
-      .in('id', routeIds)
-      .eq('is_active', true);
+    // Fetch routes separately using database function to bypass RLS issues
+    const { data: routes } = await supabase.rpc('get_routes_by_ids', {
+      p_route_ids: routeIds,
+    });
 
-    // Fetch buses separately
-    const { data: buses } = await supabase
-      .from('buses')
-      .select('id, bus_number, plate_number, bus_type, total_seats, amenities, is_active')
-      .in('id', busIds)
-      .eq('is_active', true);
+    // Fetch buses separately using database function to bypass RLS issues
+    const { data: buses } = await supabase.rpc('get_buses_by_ids', {
+      p_bus_ids: busIds,
+    });
 
     // Create maps for quick lookup
     const routesMap = new Map(routes?.map((r) => [r.id, r]) || []);
