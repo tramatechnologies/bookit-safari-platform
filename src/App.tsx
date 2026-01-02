@@ -23,6 +23,10 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminOperators from "./pages/AdminOperators";
 import AdminCommissions from "./pages/AdminCommissions";
 import OperatorDashboard from "./pages/OperatorDashboard";
+import OperatorBuses from "./pages/OperatorBuses";
+import OperatorRoutes from "./pages/OperatorRoutes";
+import OperatorBookings from "./pages/OperatorBookings";
+import OperatorSchedules from "./pages/OperatorSchedules";
 import RoutesPage from "./pages/Routes";
 import Operators from "./pages/Operators";
 import Help from "./pages/Help";
@@ -75,6 +79,11 @@ const App = () => (
             <Route path="/admin/operators" element={<AdminOperators />} />
             <Route path="/admin/commissions" element={<AdminCommissions />} />
             <Route path="/operator" element={<OperatorDashboard />} />
+            <Route path="/operator/buses" element={<OperatorBuses />} />
+            <Route path="/operator/routes" element={<OperatorRoutes />} />
+            <Route path="/operator/bookings" element={<OperatorBookings />} />
+            <Route path="/operator/schedules/new" element={<OperatorSchedules />} />
+            <Route path="/operator/schedules" element={<OperatorSchedules />} />
             <Route path="/routes" element={<RoutesPage />} />
             <Route path="/operators" element={<Operators />} />
             <Route path="/help" element={<Help />} />

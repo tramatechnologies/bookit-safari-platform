@@ -24,11 +24,13 @@ export interface ScheduleWithDetails extends Schedule {
     bus_type: string | null;
     total_seats: number;
     amenities: string[] | null;
+    seat_layout?: string | null;
   } | null;
   operator: {
     id: string;
     company_name: string;
     status: string;
+    logo_url?: string | null;
   } | null;
 }
 
@@ -162,6 +164,7 @@ export const schedulesApi = {
               id: operator.id,
               company_name: operator.company_name,
               status: operator.status,
+              logo_url: operator.logo_url || null,
             } : null,
           } : null,
         } as ScheduleWithDetails;
@@ -331,6 +334,17 @@ export const schedulesApi = {
 
     if (error) throw error;
     return data || 0;
+  },
+
+  // Get booked seat numbers for a schedule on a specific date
+  async getBookedSeats(scheduleId: string, departureDate: string): Promise<number[]> {
+    const { data, error } = await supabase.rpc('get_booked_seats', {
+      p_schedule_id: scheduleId,
+      p_departure_date: departureDate,
+    });
+
+    if (error) throw error;
+    return data || [];
   },
 };
 

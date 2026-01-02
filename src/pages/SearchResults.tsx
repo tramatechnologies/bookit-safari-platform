@@ -161,9 +161,32 @@ const SearchResults = () => {
                       <div className="flex flex-col lg:flex-row lg:items-center gap-6">
                     {/* Operator Info */}
                     <div className="flex-shrink-0 lg:w-48">
-                      <h3 className="font-display font-semibold text-lg text-foreground">
-                        {schedule.route?.operator?.company_name || 'Bus Operator'}
-                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        {schedule.route?.operator?.logo_url ? (
+                          <img
+                            src={schedule.route.operator.logo_url}
+                            alt={schedule.route.operator.company_name || 'Operator logo'}
+                            className="w-10 h-10 rounded-lg object-cover border border-border"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-teal/20 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-teal" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-display font-semibold text-lg text-foreground">
+                              {schedule.route?.operator?.company_name || 'Bus Operator'}
+                            </h3>
+                            {schedule.route?.operator?.status === 'approved' && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded text-xs font-medium">
+                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                                Verified
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                       {schedule.bus?.bus_type && (
                         <span className="inline-block px-2 py-1 bg-secondary rounded text-xs font-medium text-secondary-foreground mt-1">
                           {schedule.bus.bus_type}
@@ -171,15 +194,31 @@ const SearchResults = () => {
                       )}
                       {/* Bus Information */}
                       {schedule.bus && (
-                        <div className="mt-2 flex items-center gap-2 text-sm">
-                          <Bus className="w-4 h-4 text-amber" />
-                          <span className="font-medium text-foreground">
-                            Bus {schedule.bus.bus_number || 'N/A'}
-                          </span>
+                        <div className="mt-2 space-y-1.5">
                           {schedule.bus.plate_number && (
-                            <span className="text-xs text-muted-foreground font-mono">
-                              ({schedule.bus.plate_number})
-                            </span>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Bus className="w-4 h-4 text-amber" />
+                              <span className="text-xs text-muted-foreground font-mono">
+                                {schedule.bus.plate_number}
+                              </span>
+                            </div>
+                          )}
+                          {schedule.bus.amenities && schedule.bus.amenities.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {schedule.bus.amenities.slice(0, 3).map((amenity, idx) => (
+                                <span
+                                  key={idx}
+                                  className="px-1.5 py-0.5 bg-muted rounded text-xs text-muted-foreground"
+                                >
+                                  {amenity}
+                                </span>
+                              ))}
+                              {schedule.bus.amenities.length > 3 && (
+                                <span className="px-1.5 py-0.5 text-xs text-muted-foreground">
+                                  +{schedule.bus.amenities.length - 3} more
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       )}

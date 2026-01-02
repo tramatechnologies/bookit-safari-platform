@@ -189,20 +189,47 @@ const MyBookings = () => {
                             </p>
                           </div>
 
+                          {/* Operator Information */}
+                          {schedule?.route?.operator && (
+                            <div className="flex items-center gap-2 md:col-span-2 p-3 bg-teal/10 rounded-lg border border-teal/20">
+                              {schedule.route.operator.logo_url ? (
+                                <img
+                                  src={schedule.route.operator.logo_url}
+                                  alt={schedule.route.operator.company_name || 'Operator logo'}
+                                  className="w-8 h-8 rounded-lg object-cover border border-border"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-teal/20 flex items-center justify-center">
+                                  <Users className="w-4 h-4 text-teal" />
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-sm font-semibold">
+                                    {schedule.route.operator.company_name}
+                                  </p>
+                                  {schedule.route.operator.status === 'approved' && (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-500/20 text-green-600 rounded text-xs font-medium">
+                                      <span className="w-1 h-1 bg-green-500 rounded-full" />
+                                      Verified
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Bus Information */}
                           {schedule?.bus && (
                             <div className="flex items-start gap-3 md:col-span-2 p-3 bg-amber/10 rounded-lg border border-amber/20">
                               <Bus className="w-5 h-5 text-amber mt-0.5 flex-shrink-0" />
                               <div>
                                 <p className="text-xs text-muted-foreground mb-1">Your Bus</p>
-                                <p className="font-semibold">
-                                  Bus {schedule.bus.bus_number || 'N/A'}
-                                  {schedule.bus.plate_number && (
-                                    <span className="text-sm text-muted-foreground ml-2 font-mono">
-                                      ({schedule.bus.plate_number})
-                                    </span>
-                                  )}
-                                </p>
+                                {schedule.bus.plate_number && (
+                                  <p className="font-semibold font-mono">
+                                    {schedule.bus.plate_number}
+                                  </p>
+                                )}
                                 {schedule.bus.bus_type && (
                                   <p className="text-xs text-muted-foreground mt-0.5">
                                     {schedule.bus.bus_type}

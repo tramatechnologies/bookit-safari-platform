@@ -25,3 +25,11 @@ export const useAvailableSeats = (scheduleId: string) => {
   });
 };
 
+export const useBookedSeats = (scheduleId: string, departureDate: string) => {
+  return useQuery({
+    queryKey: ['schedule', scheduleId, 'booked-seats', departureDate],
+    queryFn: () => schedulesApi.getBookedSeats(scheduleId, departureDate),
+    enabled: !!(scheduleId && departureDate),
+  });
+};
+

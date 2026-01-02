@@ -170,18 +170,45 @@ const BookingConfirmation = () => {
                   </div>
                 </div>
 
+                {/* Operator & Bus Information */}
+                {schedule?.route?.operator && (
+                  <div className="flex items-center gap-3 p-4 bg-teal/10 rounded-lg border border-teal/20 mb-4">
+                    {schedule.route.operator.logo_url ? (
+                      <img
+                        src={schedule.route.operator.logo_url}
+                        alt={schedule.route.operator.company_name || 'Operator logo'}
+                        className="w-12 h-12 rounded-lg object-cover border border-border"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg bg-teal/20 flex items-center justify-center">
+                        <Users className="w-6 h-6 text-teal" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-lg">
+                          {schedule.route.operator.company_name}
+                        </p>
+                        {schedule.route.operator.status === 'approved' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/20 text-green-600 rounded text-xs font-medium">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                            Verified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Bus Information - Prominently Displayed */}
                 {schedule?.bus && (
                   <div className="flex items-start gap-3 p-4 bg-amber/10 rounded-lg border border-amber/20">
                     <Bus className="w-5 h-5 text-amber mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-amber mb-1">Your Bus Information</p>
-                      <p className="font-bold text-lg">
-                        Bus: {schedule.bus.bus_number || 'N/A'}
-                      </p>
                       {schedule.bus.plate_number && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Plate: <span className="font-mono font-semibold">{schedule.bus.plate_number}</span>
+                        <p className="font-bold text-lg font-mono">
+                          {schedule.bus.plate_number}
                         </p>
                       )}
                       {schedule.bus.bus_type && (
@@ -276,13 +303,7 @@ const BookingConfirmation = () => {
                   <p className="text-sm text-muted-foreground">Look for this bus at the terminal</p>
                 </div>
               </div>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Bus Number</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {schedule.bus.bus_number || 'N/A'}
-                  </p>
-                </div>
+              <div className="grid md:grid-cols-2 gap-4">
                 {schedule.bus.plate_number && (
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Plate Number</p>
@@ -308,7 +329,7 @@ const BookingConfirmation = () => {
             <h3 className="font-semibold mb-3">Important Information</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li>• Please arrive at the terminal at least 30 minutes before departure</li>
-              <li>• Look for bus number <strong className="text-foreground">{schedule?.bus?.bus_number || 'as shown above'}</strong> at the terminal</li>
+              <li>• Look for plate number <strong className="text-foreground font-mono">{schedule?.bus?.plate_number || 'as shown above'}</strong> at the terminal</li>
               <li>• Bring a valid ID for verification</li>
               <li>• Cancellation is allowed up to 24 hours before departure</li>
               <li>• Booking confirmation has been sent to your email and phone</li>

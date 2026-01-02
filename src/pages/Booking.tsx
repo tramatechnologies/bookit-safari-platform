@@ -1,20 +1,22 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Clock, MapPin, Calendar, CreditCard, User, Phone, Mail, Bus } from 'lucide-react';
+import { ArrowLeft, CreditCard, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { useSchedule, useAvailableSeats } from '@/hooks/use-schedules';
+import { SeatLayout, type SeatLayoutType, getSeatNumberFromId } from '@/components/SeatLayout';
+import { BookingSummary } from '@/components/BookingSummary';
+import { useSchedule, useAvailableSeats, useBookedSeats } from '@/hooks/use-schedules';
 import { useCreateBooking } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
-import { formatPrice } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertCircle } from 'lucide-react';
 import { createBookingSchema } from '@/lib/validations/booking';
 import { validateUuid } from '@/lib/validations/uuid';
+import { formatBookingError } from '@/lib/utils/error-messages';
 
 const Booking = () => {
   const { scheduleId: rawScheduleId } = useParams<{ scheduleId: string }>();
@@ -27,9 +29,13 @@ const Booking = () => {
   
   const { data: schedule, isLoading: loadingSchedule } = useSchedule(scheduleId || '');
   const { data: availableSeats = 0 } = useAvailableSeats(scheduleId || '');
+  const departureDate = schedule?.departure_date || '';
+  const { data: bookedSeats = [] } = useBookedSeats(scheduleId || '', departureDate);
   const createBooking = useCreateBooking();
 
-  const [selectedSeats, setSelectedSeats] = useState<number[]>([]);
+  const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]); // Seat IDs like ["A1", "B2"]
+  const [boardingPoint, setBoardingPoint] = useState<string>('');
+  const [dropOffPoint, setDropOffPoint] = useState<string>('');
   const [passengerInfo, setPassengerInfo] = useState({
     name: '',
     phone: '',
@@ -37,33 +43,58 @@ const Booking = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Get bus layout type
+  const seatLayoutType: SeatLayoutType = (schedule?.bus?.seat_layout as SeatLayoutType) || 'layout1';
+
+  // Store seat numbers along with IDs
+  const [seatIdToNumberMap, setSeatIdToNumberMap] = useState<Map<string, number>>(new Map());
+
+  // Convert seat IDs to seat numbers for booking
+  const selectedSeatNumbers = useMemo(() => {
+    return selectedSeatIds
+      .map(id => seatIdToNumberMap.get(id) || getSeatNumberFromId(id, seatLayoutType, totalSeats))
+      .filter(n => n > 0);
+  }, [selectedSeatIds, seatIdToNumberMap, seatLayoutType, totalSeats]);
+
   const totalSeats = schedule?.bus?.total_seats || 0;
   const pricePerSeat = Number(schedule?.price_tzs) || 0;
-  const totalPrice = selectedSeats.length * pricePerSeat;
+  const totalPrice = selectedSeatNumbers.length * pricePerSeat;
 
-  // Generate seat layout (assuming standard bus with 2-2 or 2-3 configuration)
-  const generateSeatLayout = () => {
-    const seats: Array<{ number: number; available: boolean; selected: boolean }> = [];
-    for (let i = 1; i <= totalSeats; i++) {
-      seats.push({
-        number: i,
-        available: i <= availableSeats, // Simplified - in real app, check against booked seats
-        selected: selectedSeats.includes(i),
-      });
+  // Get terminal options for boarding and drop-off
+  const boardingOptions = useMemo(() => {
+    const options: string[] = [];
+    if (schedule?.route?.departure_terminal) {
+      options.push(schedule.route.departure_terminal);
     }
-    return seats;
-  };
+    // Add more terminals if available (could be from a terminals table)
+    return options;
+  }, [schedule?.route?.departure_terminal]);
 
-  const handleSeatClick = (seatNumber: number) => {
-    if (selectedSeats.includes(seatNumber)) {
-      setSelectedSeats(selectedSeats.filter((s) => s !== seatNumber));
+  const dropOffOptions = useMemo(() => {
+    const options: string[] = [];
+    if (schedule?.route?.arrival_terminal) {
+      options.push(schedule.route.arrival_terminal);
+    }
+    // Add more terminals if available
+    return options;
+  }, [schedule?.route?.arrival_terminal]);
+
+  const handleSeatClick = (seatId: string, seatNumber: number) => {
+    if (selectedSeatIds.includes(seatId)) {
+      setSelectedSeatIds(selectedSeatIds.filter((id) => id !== seatId));
+      const newMap = new Map(seatIdToNumberMap);
+      newMap.delete(seatId);
+      setSeatIdToNumberMap(newMap);
     } else {
-      if (selectedSeats.length < 5) { // Limit to 5 seats per booking
-        setSelectedSeats([...selectedSeats, seatNumber]);
+      if (selectedSeatIds.length < 5) {
+        setSelectedSeatIds([...selectedSeatIds, seatId]);
+        const newMap = new Map(seatIdToNumberMap);
+        newMap.set(seatId, seatNumber);
+        setSeatIdToNumberMap(newMap);
       } else {
         toast({
-          title: 'Maximum seats',
-          description: 'You can select up to 5 seats per booking.',
+          title: 'Kikomo cha Vitanda',
+          description: 'Unaweza kuchagua hadi vitanda 5 kwa rejista moja.',
           variant: 'destructive',
         });
       }
@@ -74,10 +105,10 @@ const Booking = () => {
     e.preventDefault();
     setErrors({});
     
-    if (selectedSeats.length === 0) {
+    if (selectedSeatNumbers.length === 0) {
       toast({
-        title: 'No seats selected',
-        description: 'Please select at least one seat.',
+        title: 'Hakuna Vitanda Vilivyochaguliwa',
+        description: 'Tafadhali chagua angalau kiti kimoja.',
         variant: 'destructive',
       });
       return;
@@ -91,7 +122,7 @@ const Booking = () => {
       passengerName: passengerInfo.name,
       passengerPhone: passengerInfo.phone,
       passengerEmail: passengerInfo.email || '',
-      seatNumbers: selectedSeats,
+      seatNumbers: selectedSeatNumbers,
     });
 
     if (!result.success) {
@@ -104,8 +135,8 @@ const Booking = () => {
       });
       setErrors(fieldErrors);
       toast({
-        title: 'Validation Error',
-        description: 'Please check the form and fix the errors.',
+        title: 'Hitilafu ya Uthibitishaji',
+        description: 'Tafadhali angalia fomu na sahihisha makosa.',
         variant: 'destructive',
       });
       return;
@@ -118,15 +149,17 @@ const Booking = () => {
         passenger_name: passengerInfo.name,
         passenger_phone: passengerInfo.phone,
         passenger_email: passengerInfo.email || null,
-        seat_numbers: selectedSeats,
-        total_seats: selectedSeats.length,
-        total_amount_tzs: totalPrice, // Database uses total_amount_tzs
+        seat_numbers: selectedSeatNumbers,
+        total_seats: selectedSeatNumbers.length,
+        total_price_tzs: totalPrice,
         status: 'pending',
-      });
+        boarding_point: boardingPoint || null,
+        drop_off_point: dropOffPoint || null,
+      } as any); // Type assertion needed until types are regenerated
 
       toast({
-        title: 'Booking created!',
-        description: 'Redirecting to payment...',
+        title: 'Rejista Imetengenezwa!',
+        description: 'Unaelekezwa kwenye malipo...',
       });
 
       navigate(`/booking/${booking.id}/payment`);
@@ -149,12 +182,12 @@ const Booking = () => {
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-destructive mb-1">Invalid Schedule ID</h3>
+              <h3 className="font-semibold text-destructive mb-1">Kitambulisho Kisichokuwa Sahihi</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                The schedule ID in the URL is invalid.
+                Kitambulisho cha ratiba kwenye URL sio sahihi.
               </p>
               <Button variant="outline" onClick={() => navigate('/')}>
-                Go Home
+                Rudi Nyumbani
               </Button>
             </div>
           </div>
@@ -184,12 +217,12 @@ const Booking = () => {
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold text-destructive mb-1">Schedule not found</h3>
+              <h3 className="font-semibold text-destructive mb-1">Ratiba Haipatikani</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                The schedule you're looking for doesn't exist or is no longer available.
+                Ratiba unayoitafuta haipo au haipatikani tena.
               </p>
               <Button variant="outline" onClick={() => navigate('/')}>
-                Go Home
+                Rudi Nyumbani
               </Button>
             </div>
           </div>
@@ -198,10 +231,6 @@ const Booking = () => {
       </div>
     );
   }
-
-  const seats = generateSeatLayout();
-  const seatsPerRow = 4; // 2-2 configuration
-  const rows = Math.ceil(totalSeats / seatsPerRow);
 
   return (
     <ProtectedRoute>
@@ -216,95 +245,87 @@ const Booking = () => {
             className="mb-6"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Search
+            Rudi kwenye Utafutaji
           </Button>
 
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Trip Summary */}
+              {/* Operator & Bus Information */}
               <div className="bg-card rounded-2xl border border-border p-6">
-                <h2 className="font-display text-2xl font-bold mb-4">Trip Details</h2>
+                <h2 className="font-display text-xl font-bold mb-4">Taarifa za Kampuni na Basi</h2>
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-teal" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">From</p>
-                      <p className="font-semibold">
-                        {schedule.route?.departure_region?.name || 'N/A'}
-                      </p>
-                      {schedule.route?.departure_terminal && (
-                        <p className="text-sm text-muted-foreground">
-                          {schedule.route.departure_terminal}
-                        </p>
+                  {/* Operator Info */}
+                  {schedule.route?.operator && (
+                    <div className="flex items-center gap-3 pb-4 border-b border-border">
+                      {schedule.route.operator.logo_url ? (
+                        <img
+                          src={schedule.route.operator.logo_url}
+                          alt={schedule.route.operator.company_name || 'Operator logo'}
+                          className="w-12 h-12 rounded-lg object-cover border border-border"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-teal/20 flex items-center justify-center">
+                          <Users className="w-6 h-6 text-teal" />
+                        </div>
                       )}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-lg">
+                            {schedule.route.operator.company_name}
+                          </p>
+                          {schedule.route.operator.status === 'approved' && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/20 text-green-600 rounded text-xs font-medium">
+                              <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                              Verified
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-amber" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">To</p>
-                      <p className="font-semibold">
-                        {schedule.route?.destination_region?.name || 'N/A'}
-                      </p>
-                      {schedule.route?.arrival_terminal && (
-                        <p className="text-sm text-muted-foreground">
-                          {schedule.route.arrival_terminal}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Date</p>
-                      <p className="font-semibold">
-                        {new Date(schedule.departure_date).toLocaleDateString('en-TZ', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Departure Time</p>
-                      <p className="font-semibold">{schedule.departure_time.substring(0, 5)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Operator</p>
-                      <p className="font-semibold">
-                        {schedule.route?.operator?.company_name || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
+                  )}
 
                   {/* Bus Information */}
                   {schedule.bus && (
-                    <div className="flex items-center gap-3 p-3 bg-amber/10 rounded-lg border border-amber/20">
-                      <Bus className="w-5 h-5 text-amber" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Your Bus</p>
-                        <p className="font-bold text-lg">
-                          Bus {schedule.bus.bus_number || 'N/A'}
-                        </p>
-                        {schedule.bus.plate_number && (
-                          <p className="text-xs text-muted-foreground font-mono">
-                            Plate: {schedule.bus.plate_number}
-                          </p>
-                        )}
-                        {schedule.bus.bus_type && (
-                          <p className="text-xs text-muted-foreground">
-                            {schedule.bus.bus_type}
-                          </p>
-                        )}
-                      </div>
+                    <div className="space-y-3">
+                      {schedule.bus.plate_number && (
+                        <div className="flex items-center gap-3">
+                          <Bus className="w-5 h-5 text-amber" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Namba ya Leseni</p>
+                            <p className="font-mono font-semibold text-lg">{schedule.bus.plate_number}</p>
+                          </div>
+                        </div>
+                      )}
+                      {schedule.bus.bus_type && (
+                        <div className="flex items-center gap-3">
+                          <div className="w-5 h-5" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Aina ya Basi</p>
+                            <span className="inline-block px-3 py-1 bg-teal/20 text-teal rounded text-sm font-medium mt-1">
+                              {schedule.bus.bus_type}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      {schedule.bus.amenities && schedule.bus.amenities.length > 0 && (
+                        <div className="flex items-start gap-3 pt-2">
+                          <div className="w-5 h-5" />
+                          <div className="flex-1">
+                            <p className="text-sm text-muted-foreground mb-2">Vifaa</p>
+                            <div className="flex flex-wrap gap-2">
+                              {schedule.bus.amenities.map((amenity, index) => (
+                                <span
+                                  key={index}
+                                  className="px-3 py-1 bg-muted border border-border rounded-full text-xs text-foreground"
+                                >
+                                  {amenity}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -313,70 +334,60 @@ const Booking = () => {
               {/* Seat Selection */}
               <div className="bg-card rounded-2xl border border-border p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-display text-2xl font-bold">Select Seats</h2>
+                  <h2 className="font-display text-2xl font-bold">CHAGUA KITI CHAKO</h2>
                   <div className="text-sm text-muted-foreground">
-                    {availableSeats} seats available
+                    Vitanda {availableSeats} vinapatikana
                   </div>
                 </div>
+
+                <p className="text-sm text-muted-foreground mb-6">
+                  Chagua kiti kwa kubonyeza alama ya kiti unachohitaji
+                </p>
 
                 {/* Seat Map */}
                 <div className="space-y-4">
                   {/* Legend */}
                   <div className="flex items-center gap-6 text-sm mb-6">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border-2 border-border bg-background" />
-                      <span className="text-muted-foreground">Available</span>
+                      <div className="w-8 h-8 rounded border-2 border-gray-300 bg-gray-100" />
+                      <span className="text-muted-foreground">Kilichopo</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border-2 border-teal bg-teal/20" />
-                      <span className="text-muted-foreground">Selected</span>
+                      <div className="w-8 h-8 rounded border-2 border-red-500 bg-red-500" />
+                      <span className="text-muted-foreground">Kilichochaguliwa</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border-2 border-border bg-muted opacity-50" />
-                      <span className="text-muted-foreground">Occupied</span>
+                      <div className="w-8 h-8 rounded border-2 border-gray-400 bg-gray-300 opacity-50" />
+                      <span className="text-muted-foreground">Kisichopatikana</span>
                     </div>
                   </div>
 
                   {/* Bus Layout */}
                   <div className="bg-muted/30 rounded-lg p-6">
-                    <div className="text-center mb-4 text-sm font-medium text-muted-foreground">
-                      Driver
-                    </div>
-                    <div className="grid grid-cols-4 gap-3 max-w-md mx-auto">
-                      {seats.map((seat) => (
-                        <button
-                          key={seat.number}
-                          type="button"
-                          onClick={() => handleSeatClick(seat.number)}
-                          disabled={!seat.available}
-                          className={`
-                            w-12 h-12 rounded border-2 flex items-center justify-center font-medium text-sm
-                            transition-all
-                            ${
-                              seat.selected
-                                ? 'border-teal bg-teal/20 text-teal'
-                                : seat.available
-                                ? 'border-border bg-background hover:border-primary hover:bg-primary/5'
-                                : 'border-border bg-muted opacity-50 cursor-not-allowed'
-                            }
-                          `}
-                        >
-                          {seat.number}
-                        </button>
-                      ))}
-                    </div>
+                    <SeatLayout
+                      layoutType={seatLayoutType}
+                      totalSeats={totalSeats}
+                      availableSeats={availableSeats}
+                      bookedSeats={bookedSeats}
+                      selectedSeats={selectedSeatIds}
+                      onSeatClick={handleSeatClick}
+                      maxSelections={5}
+                    />
                   </div>
 
-                  {selectedSeats.length > 0 && (
-                    <div className="mt-4 p-4 bg-teal/10 rounded-lg">
-                      <p className="text-sm font-medium mb-2">Selected Seats:</p>
+                  {selectedSeatIds.length > 0 && (
+                    <div className="mt-4 p-4 bg-red-500/10 rounded-lg">
+                      <p className="text-sm font-medium mb-2">UCHAGUZ WA KITI</p>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Kiti kilichochaguliwa: {selectedSeatIds.length}
+                      </p>
                       <div className="flex flex-wrap gap-2">
-                        {selectedSeats.map((seat) => (
+                        {selectedSeatIds.map((seatId) => (
                           <span
-                            key={seat}
-                            className="px-3 py-1 bg-teal text-teal-foreground rounded-full text-sm font-medium"
+                            key={seatId}
+                            className="px-3 py-1 bg-red-500 text-white rounded-full text-sm font-medium"
                           >
-                            Seat {seat}
+                            Kiti {seatId}
                           </span>
                         ))}
                       </div>
@@ -385,70 +396,112 @@ const Booking = () => {
                 </div>
               </div>
 
+              {/* Boarding and Drop-off Points */}
+              <div className="bg-card rounded-2xl border border-border p-6">
+                <h2 className="font-display text-2xl font-bold mb-4">Chagua Vituo</h2>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="boarding">KITUO UTAKAPOPANDA BASI</Label>
+                    <Select value={boardingPoint} onValueChange={setBoardingPoint}>
+                      <SelectTrigger id="boarding" className="w-full">
+                        <SelectValue placeholder="Chagua kituo cha basi" />
+                        <ChevronDown className="w-4 h-4 opacity-50" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {boardingOptions.length > 0 ? (
+                          boardingOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value={schedule.route?.departure_terminal || ''} disabled>
+                            {schedule.route?.departure_terminal || 'Hakuna vituo vinavyopatikana'}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dropoff">KITUO CHA KUSHUKIA</Label>
+                    <Select value={dropOffPoint} onValueChange={setDropOffPoint}>
+                      <SelectTrigger id="dropoff" className="w-full">
+                        <SelectValue placeholder="Chagua kituo" />
+                        <ChevronDown className="w-4 h-4 opacity-50" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dropOffOptions.length > 0 ? (
+                          dropOffOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {option}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value={schedule.route?.arrival_terminal || ''} disabled>
+                            {schedule.route?.arrival_terminal || 'Hakuna vituo vinavyopatikana'}
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
               {/* Passenger Information */}
               <div className="bg-card rounded-2xl border border-border p-6">
-                <h2 className="font-display text-2xl font-bold mb-4">Passenger Information</h2>
+                <h2 className="font-display text-2xl font-bold mb-4">Taarifa za Abiria</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="name"
-                        value={passengerInfo.name}
-                        onChange={(e) =>
-                          setPassengerInfo({ ...passengerInfo, name: e.target.value })
-                        }
-                        className="pl-10"
-                        placeholder="Enter Your Full Name"
-                        required
-                      />
-                    </div>
+                    <Label htmlFor="name">Jina Kamili *</Label>
+                    <Input
+                      id="name"
+                      value={passengerInfo.name}
+                      onChange={(e) =>
+                        setPassengerInfo({ ...passengerInfo, name: e.target.value })
+                      }
+                      placeholder="Ingiza Jina Lako Kamili"
+                      required
+                    />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="phone"
-                        type="tel"
-                        value={passengerInfo.phone}
-                        onChange={(e) => {
-                          setPassengerInfo({ ...passengerInfo, phone: e.target.value });
-                          if (errors.passengerPhone) setErrors({ ...errors, passengerPhone: '' });
-                        }}
-                        className={`pl-10 ${errors.passengerPhone ? 'border-destructive' : ''}`}
-                        placeholder="Enter Your Phone Number"
-                        required
-                        disabled={createBooking.isPending}
-                      />
-                      {errors.passengerPhone && (
-                        <p className="text-xs text-destructive mt-1">{errors.passengerPhone}</p>
-                      )}
-                    </div>
+                    <Label htmlFor="phone">Namba ya Simu *</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={passengerInfo.phone}
+                      onChange={(e) => {
+                        setPassengerInfo({ ...passengerInfo, phone: e.target.value });
+                        if (errors.passengerPhone) setErrors({ ...errors, passengerPhone: '' });
+                      }}
+                      className={errors.passengerPhone ? 'border-destructive' : ''}
+                      placeholder="Ingiza Namba ya Simu Yako"
+                      required
+                      disabled={createBooking.isPending}
+                    />
+                    {errors.passengerPhone && (
+                      <p className="text-xs text-destructive mt-1">{errors.passengerPhone}</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email (Optional)</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        value={passengerInfo.email}
-                        onChange={(e) => {
-                          setPassengerInfo({ ...passengerInfo, email: e.target.value });
-                          if (errors.passengerEmail) setErrors({ ...errors, passengerEmail: '' });
-                        }}
-                        className={`pl-10 ${errors.passengerEmail ? 'border-destructive' : ''}`}
-                        placeholder="Enter Your Email Address (Optional)"
-                        disabled={createBooking.isPending}
-                      />
-                      {errors.passengerEmail && (
-                        <p className="text-xs text-destructive mt-1">{errors.passengerEmail}</p>
-                      )}
-                    </div>
+                    <Label htmlFor="email">Barua Pepe (Si Lazima)</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={passengerInfo.email}
+                      onChange={(e) => {
+                        setPassengerInfo({ ...passengerInfo, email: e.target.value });
+                        if (errors.passengerEmail) setErrors({ ...errors, passengerEmail: '' });
+                      }}
+                      className={errors.passengerEmail ? 'border-destructive' : ''}
+                      placeholder="Ingiza Anwani ya Barua Pepe Yako (Si Lazima)"
+                      disabled={createBooking.isPending}
+                    />
+                    {errors.passengerEmail && (
+                      <p className="text-xs text-destructive mt-1">{errors.passengerEmail}</p>
+                    )}
                   </div>
 
                   <Button
@@ -456,17 +509,17 @@ const Booking = () => {
                     variant="teal"
                     size="lg"
                     className="w-full"
-                    disabled={createBooking.isPending || selectedSeats.length === 0}
+                    disabled={createBooking.isPending || selectedSeatNumbers.length === 0}
                   >
                     {createBooking.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
+                        Inachakata...
                       </>
                     ) : (
                       <>
                         <CreditCard className="w-4 h-4 mr-2" />
-                        Proceed to Payment
+                        Endelea kwenye Malipo
                       </>
                     )}
                   </Button>
@@ -474,31 +527,16 @@ const Booking = () => {
               </div>
             </div>
 
-            {/* Sidebar - Price Summary */}
+            {/* Sidebar - Booking Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-card rounded-2xl border border-border p-6 sticky top-24">
-                <h3 className="font-display text-xl font-bold mb-4">Price Summary</h3>
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Seats ({selectedSeats.length})</span>
-                    <span className="font-medium">
-                      {selectedSeats.length > 0
-                        ? formatPrice(pricePerSeat * selectedSeats.length)
-                        : formatPrice(0)}
-                    </span>
-                  </div>
-                  <div className="border-t border-border pt-3 flex justify-between">
-                    <span className="font-bold">Total</span>
-                    <span className="font-bold text-2xl text-teal">
-                      {formatPrice(totalPrice)}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>• Payment via mobile money or card</p>
-                  <p>• Booking confirmation sent via SMS/Email</p>
-                  <p>• Cancellation allowed up to 24h before departure</p>
-                </div>
+              <div className="sticky top-24">
+                <BookingSummary
+                  schedule={schedule}
+                  selectedSeats={selectedSeatIds}
+                  passengerInfo={passengerInfo}
+                  boardingPoint={boardingPoint}
+                  dropOffPoint={dropOffPoint}
+                />
               </div>
             </div>
           </div>
@@ -511,4 +549,3 @@ const Booking = () => {
 };
 
 export default Booking;
-
