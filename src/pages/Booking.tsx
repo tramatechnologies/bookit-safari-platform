@@ -32,7 +32,7 @@ const Booking = () => {
   const { data: availableSeats = 0 } = useAvailableSeats(scheduleId || '');
   
   // Extract departure date as a primitive string (strings are stable primitives)
-  const departureDate = schedule?.departure_date ?? '';
+  const departureDate = schedule?.departure_time ? new Date(schedule.departure_time).toISOString().split('T')[0] : '';
   const { data: bookedSeats = [] } = useBookedSeats(scheduleId || '', departureDate);
   const createBooking = useCreateBooking();
 
@@ -73,22 +73,23 @@ const Booking = () => {
 
   const handleSeatClick = useCallback((seatId: string, seatNumber: number) => {
     setSelectedSeatIds((prevIds) => {
-      if (prevIds.includes(seatId)) {
-        // Deselect seat
-        const newIds = [...prevIds.filter((id) => id !== seatId)];
-        // Remove passenger info for deselected seat
-        setPassengers((prev) => {
-          const newPassengers = { ...prev };
-          delete newPassengers[seatId];
-          return newPassengers;
-        });
-        return newIds;
-      } else {
-        // Prevent duplicate seat selection
-        if (prevIds.includes(seatId)) {
-          return prevIds;
+      // Create a new array to ensure proper state update
+      const newIds = [...prevIds];
+      
+      if (newIds.includes(seatId)) {
+        // Deselect seat - remove only the first occurrence
+        const indexToRemove = newIds.indexOf(seatId);
+        if (indexToRemove !== -1) {
+          newIds.splice(indexToRemove, 1);
+          // Remove passenger info for deselected seat
+          setPassengers((prev) => {
+            const newPassengers = { ...prev };
+            delete newPassengers[seatId];
+            return newPassengers;
+          });
         }
-        if (prevIds.length < numberOfPassengers) {
+      } else {
+        if (newIds.length < numberOfPassengers) {
           // Initialize passenger info for new seat
           setPassengers((prev) => {
             if (!prev[seatId]) {
@@ -98,23 +99,25 @@ const Booking = () => {
                   name: '',
                   gender: '',
                   category: '',
-                  phone: prevIds.length === 0 ? passengerInfo.phone : undefined,
-                  email: prevIds.length === 0 ? passengerInfo.email : undefined,
+                  phone: newIds.length === 0 ? passengerInfo.phone : undefined,
+                  email: newIds.length === 0 ? passengerInfo.email : undefined,
                 },
               };
             }
             return prev;
           });
-          return [...prevIds, seatId];
+          newIds.push(seatId);
         } else {
           toast({
             title: 'Seat Limit Reached',
             description: `You can only select ${numberOfPassengers} seat${numberOfPassengers > 1 ? 's' : ''} for ${numberOfPassengers} passenger${numberOfPassengers > 1 ? 's' : ''}.`,
             variant: 'destructive',
           });
-          return [...prevIds];
         }
       }
+      
+      // Ensure no duplicates by creating a set and converting back to array
+      return Array.from(new Set(newIds));
     });
   }, [numberOfPassengers, passengerInfo.phone, passengerInfo.email, toast]);
 
@@ -656,7 +659,7 @@ const Booking = () => {
                     Please provide details for each passenger. The first passenger's contact information will be used for booking confirmation.
                   </p>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    {selectedSeatIds.filter((seatId, index, self) => self.indexOf(seatId) === index).map((seatId, index) => (
+                    {Array.from(new Set(selectedSeatIds)).map((seatId, index) => (
                       <PassengerForm
                         key={`${seatId}-${index}`}
                         passengerNumber={index + 1}
