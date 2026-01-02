@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Loader2, AlertCircle, ChevronDown, Users, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,8 @@ const Booking = () => {
   
   const { data: schedule, isLoading: loadingSchedule } = useSchedule(scheduleId || '');
   const { data: availableSeats = 0 } = useAvailableSeats(scheduleId || '');
-  const departureDate = schedule?.departure_date || '';
+  // Stabilize departureDate to prevent infinite loops
+  const departureDate = useMemo(() => schedule?.departure_date || '', [schedule?.departure_date]);
   const { data: bookedSeats = [] } = useBookedSeats(scheduleId || '', departureDate);
   const createBooking = useCreateBooking();
 
@@ -65,24 +66,9 @@ const Booking = () => {
 
   const totalPrice = selectedSeatNumbers.length * schedulePrice;
 
-  // Get terminal options for boarding and drop-off (use stable dependencies)
-  const boardingOptions = useMemo(() => {
-    const options: string[] = [];
-    if (departureTerminal) {
-      options.push(departureTerminal);
-    }
-    // Add more terminals if available (could be from a terminals table)
-    return options;
-  }, [departureTerminal]);
-
-  const dropOffOptions = useMemo(() => {
-    const options: string[] = [];
-    if (arrivalTerminal) {
-      options.push(arrivalTerminal);
-    }
-    // Add more terminals if available
-    return options;
-  }, [arrivalTerminal]);
+  // Get terminal options for boarding and drop-off (calculate directly to avoid dependency issues)
+  const boardingOptions: string[] = departureTerminal ? [departureTerminal] : [];
+  const dropOffOptions: string[] = arrivalTerminal ? [arrivalTerminal] : [];
 
   const handleSeatClick = (seatId: string, seatNumber: number) => {
     if (selectedSeatIds.includes(seatId)) {
@@ -119,18 +105,21 @@ const Booking = () => {
   };
 
   const handlePassengerChange = (seatId: string, passenger: PassengerInfo) => {
-    setPassengers({
-      ...passengers,
+    setPassengers((prev) => ({
+      ...prev,
       [seatId]: passenger,
-    });
+    }));
     // Update primary contact info if it's the first passenger
-    if (selectedSeatIds[0] === seatId) {
-      setPassengerInfo({
-        name: passenger.name,
-        phone: passenger.phone || '',
-        email: passenger.email || '',
-      });
-    }
+    setSelectedSeatIds((prevIds) => {
+      if (prevIds[0] === seatId) {
+        setPassengerInfo({
+          name: passenger.name,
+          phone: passenger.phone || '',
+          email: passenger.email || '',
+        });
+      }
+      return prevIds;
+    });
   };
 
   // Reset seat selection when passenger count changes
