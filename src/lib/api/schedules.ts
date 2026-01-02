@@ -44,23 +44,12 @@ export interface SearchFilters {
 export const schedulesApi = {
   // Search schedules
   async searchSchedules(filters: SearchFilters): Promise<ScheduleWithDetails[]> {
-    // Fetch schedules without nested selects to avoid RLS issues
-    // Select specific columns instead of * to avoid potential RLS issues
-    let query = supabase
-      .from('schedules')
-      .select('id, route_id, bus_id, departure_date, departure_time, arrival_time, price_tzs, available_seats, is_active, created_at, updated_at')
-      .eq('is_active', true)
-      .gte('departure_date', filters.date || new Date().toISOString().split('T')[0]);
-
-    // Filter by price
-    if (filters.minPrice) {
-      query = query.gte('price_tzs', filters.minPrice);
-    }
-    if (filters.maxPrice) {
-      query = query.lte('price_tzs', filters.maxPrice);
-    }
-
-    const { data: schedules, error } = await query.order('departure_time', { ascending: true });
+    // Use database function to bypass RLS issues with PostgREST
+    const { data: schedules, error } = await supabase.rpc('get_active_schedules', {
+      p_departure_date: filters.date || new Date().toISOString().split('T')[0],
+      p_min_price: filters.minPrice || null,
+      p_max_price: filters.maxPrice || null,
+    });
 
     if (error) throw error;
     if (!schedules || schedules.length === 0) return [];
