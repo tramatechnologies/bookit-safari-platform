@@ -69,24 +69,11 @@ export const schedulesApi = {
 
     // Filter by route regions
     if (filters.fromRegionId || filters.toRegionId) {
-      // Get approved operator IDs first
-      const { data: approvedOperators } = await supabase
-        .from('bus_operators')
-        .select('id')
-        .eq('status', 'approved');
-
-      const approvedOperatorIds = approvedOperators?.map((op) => op.id) || [];
-
-      if (approvedOperatorIds.length === 0) {
-        return [];
-      }
-
-      // Get routes that match the region criteria and have approved operators
+      // Get routes that match the region criteria
       let routeQuery = supabase
         .from('routes')
-        .select('id')
-        .eq('is_active', true)
-        .in('operator_id', approvedOperatorIds);
+        .select('id, operator_id')
+        .eq('is_active', true);
 
       if (filters.fromRegionId) {
         routeQuery = routeQuery.eq('departure_region_id', filters.fromRegionId);
@@ -96,36 +83,78 @@ export const schedulesApi = {
       }
 
       const { data: routes } = await routeQuery;
-      const routeIds = routes?.map((r) => r.id) || [];
       
-      if (routeIds.length > 0) {
-        query = query.in('route_id', routeIds);
-      } else {
-        // No routes match, return empty
+      if (!routes || routes.length === 0) {
         return [];
       }
-    } else {
-      // If no region filters, still filter by approved operators
-      // Get approved operator IDs first
-      const { data: approvedOperators } = await supabase
-        .from('bus_operators')
-        .select('id')
-        .eq('status', 'approved');
 
-      const approvedOperatorIds = approvedOperators?.map((op) => op.id) || [];
+      // Get operator IDs from routes and check which are approved
+      const operatorIds = [...new Set(routes.map((r) => r.operator_id).filter(Boolean))];
+      
+      if (operatorIds.length === 0) {
+        return [];
+      }
+
+      // Check which operators are approved (using a simple query that should work with RLS)
+      const { data: operators } = await supabase
+        .from('bus_operators')
+        .select('id, status')
+        .in('id', operatorIds);
+
+      const approvedOperatorIds = operators
+        ?.filter((op) => op.status === 'approved')
+        .map((op) => op.id) || [];
 
       if (approvedOperatorIds.length === 0) {
         return [];
       }
 
-      // Get all routes from approved operators
-      const { data: approvedRoutes } = await supabase
+      // Filter routes to only include those with approved operators
+      const approvedRouteIds = routes
+        .filter((r) => r.operator_id && approvedOperatorIds.includes(r.operator_id))
+        .map((r) => r.id);
+      
+      if (approvedRouteIds.length > 0) {
+        query = query.in('route_id', approvedRouteIds);
+      } else {
+        return [];
+      }
+    } else {
+      // If no region filters, get all active routes and filter by approved operators
+      const { data: routes } = await supabase
         .from('routes')
-        .select('id')
-        .eq('is_active', true)
-        .in('operator_id', approvedOperatorIds);
+        .select('id, operator_id')
+        .eq('is_active', true);
 
-      const approvedRouteIds = approvedRoutes?.map((r) => r.id) || [];
+      if (!routes || routes.length === 0) {
+        return [];
+      }
+
+      // Get operator IDs from routes
+      const operatorIds = [...new Set(routes.map((r) => r.operator_id).filter(Boolean))];
+      
+      if (operatorIds.length === 0) {
+        return [];
+      }
+
+      // Check which operators are approved
+      const { data: operators } = await supabase
+        .from('bus_operators')
+        .select('id, status')
+        .in('id', operatorIds);
+
+      const approvedOperatorIds = operators
+        ?.filter((op) => op.status === 'approved')
+        .map((op) => op.id) || [];
+
+      if (approvedOperatorIds.length === 0) {
+        return [];
+      }
+
+      // Filter routes to only include those with approved operators
+      const approvedRouteIds = routes
+        .filter((r) => r.operator_id && approvedOperatorIds.includes(r.operator_id))
+        .map((r) => r.id);
 
       if (approvedRouteIds.length > 0) {
         query = query.in('route_id', approvedRouteIds);
