@@ -548,7 +548,7 @@ const Booking = () => {
                   <div className="bg-muted/30 rounded-lg p-6">
                     <SeatLayout
                       layoutType={seatLayoutType}
-                      totalSeats={totalSeats}
+                      totalSeats={busTotalSeats}
                       availableSeats={availableSeats}
                       bookedSeats={bookedSeats}
                       selectedSeats={selectedSeatIds}
