@@ -6,17 +6,17 @@ This guide will help you resolve the sitemap fetch error in Google Search Consol
 
 ## Step 1: Verify Sitemap is Accessible
 
-1. **Test in Browser**: Open `https://www.bookitsafari.com/sitemap.xml` directly in your browser
+1. **Test in Browser**: Open `https://bookitsafari.com/sitemap.xml` directly in your browser
    - You should see the XML content displayed
    - If you see HTML or an error, the sitemap is not being served correctly
 
 2. **Check HTTP Status**: Use an online tool like [httpstatus.io](https://httpstatus.io/) to verify:
-   - URL: `https://www.bookitsafari.com/sitemap.xml`
+   - URL: `https://bookitsafari.com/sitemap.xml`
    - Expected Status: `200 OK`
    - Content-Type: `application/xml` or `text/xml`
 
 3. **Validate XML Format**: Use [XML Sitemap Validator](https://www.xml-sitemaps.com/validate-xml-sitemap.html)
-   - Enter: `https://www.bookitsafari.com/sitemap.xml`
+   - Enter: `https://bookitsafari.com/sitemap.xml`
    - Check for any XML syntax errors
 
 ## Step 2: Verify Vercel Deployment
@@ -35,12 +35,12 @@ This guide will help you resolve the sitemap fetch error in Google Search Consol
 1. **Remove Old Sitemap Entry**:
    - Go to Google Search Console
    - Navigate to: Sitemaps (under Indexing)
-   - Find `https://www.bookitsafari.com/sitemap.xml`
+   - Find `https://bookitsafari.com/sitemap.xml`
    - Click the three dots menu → Remove
 
 2. **Resubmit Sitemap**:
    - Click "Add a new sitemap"
-   - Enter: `sitemap.xml` (or the full URL: `https://www.bookitsafari.com/sitemap.xml`)
+   - Enter: `sitemap.xml` (or the full URL: `https://bookitsafari.com/sitemap.xml`)
    - Click "Submit"
 
 3. **Wait for Processing**:
@@ -51,7 +51,7 @@ This guide will help you resolve the sitemap fetch error in Google Search Consol
 
 Ensure your `robots.txt` includes the sitemap reference:
 ```
-Sitemap: https://www.bookitsafari.com/sitemap.xml
+Sitemap: https://bookitsafari.com/sitemap.xml
 ```
 
 ## Step 5: Common Issues and Solutions
@@ -76,7 +76,7 @@ Sitemap: https://www.bookitsafari.com/sitemap.xml
 
 1. **Google Search Console URL Inspection Tool**:
    - Go to: URL Inspection (under Indexing)
-   - Enter: `https://www.bookitsafari.com/sitemap.xml`
+   - Enter: `https://bookitsafari.com/sitemap.xml`
    - Click "Test Live URL"
    - Check if it shows as "Indexable" and returns 200 status
 
@@ -86,7 +86,7 @@ Sitemap: https://www.bookitsafari.com/sitemap.xml
 ## Current Sitemap Configuration
 
 - **Location**: `public/sitemap.xml`
-- **URL**: `https://www.bookitsafari.com/sitemap.xml`
+- **URL**: `https://bookitsafari.com/sitemap.xml`
 - **Format**: XML Sitemap Protocol 0.9
 - **Total URLs**: 13 pages
 - **Last Updated**: 2026-01-02

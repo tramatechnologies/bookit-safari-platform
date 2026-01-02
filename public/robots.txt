@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://www.bookitsafari.com/sitemap.xml
+Sitemap: https://bookitsafari.com/sitemap.xml
 
 # Disallow admin and operator dashboards
 Disallow: /admin/
