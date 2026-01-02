@@ -42,44 +42,47 @@ const Booking = () => {
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
   
   // Legacy passenger info for backward compatibility (primary contact)
-  const [passengerInfo, setPassengerInfo] = useState({
+  const [passengerInfo, setPassengerInfo] = useState(() => ({
     name: '',
     phone: '',
     email: user?.email || '',
-  });
+  }));
+
+  // Extract stable values for dependencies
+  const departureTerminal = schedule?.route?.departure_terminal || null;
+  const arrivalTerminal = schedule?.route?.arrival_terminal || null;
+  const seatLayout = schedule?.bus?.seat_layout || 'layout1';
+  const busTotalSeats = schedule?.bus?.total_seats || 0;
+  const schedulePrice = Number(schedule?.price_tzs) || 0;
 
   // Get bus layout type
-  const seatLayoutType: SeatLayoutType = (schedule?.bus?.seat_layout as SeatLayoutType) || 'layout1';
-
-  // Define these before useMemo to avoid initialization order issues
-  const totalSeats = schedule?.bus?.total_seats || 0;
-  const pricePerSeat = Number(schedule?.price_tzs) || 0;
+  const seatLayoutType: SeatLayoutType = (seatLayout as SeatLayoutType);
 
   // Convert seat IDs to seat numbers for booking (calculate directly - no memoization to avoid dependency issues)
   const selectedSeatNumbers = selectedSeatIds
-    .map(id => getSeatNumberFromId(id, seatLayoutType, totalSeats))
+    .map(id => getSeatNumberFromId(id, seatLayoutType, busTotalSeats))
     .filter(n => n > 0);
 
-  const totalPrice = selectedSeatNumbers.length * pricePerSeat;
+  const totalPrice = selectedSeatNumbers.length * schedulePrice;
 
-  // Get terminal options for boarding and drop-off
+  // Get terminal options for boarding and drop-off (use stable dependencies)
   const boardingOptions = useMemo(() => {
     const options: string[] = [];
-    if (schedule?.route?.departure_terminal) {
-      options.push(schedule.route.departure_terminal);
+    if (departureTerminal) {
+      options.push(departureTerminal);
     }
     // Add more terminals if available (could be from a terminals table)
     return options;
-  }, [schedule?.route?.departure_terminal]);
+  }, [departureTerminal]);
 
   const dropOffOptions = useMemo(() => {
     const options: string[] = [];
-    if (schedule?.route?.arrival_terminal) {
-      options.push(schedule.route.arrival_terminal);
+    if (arrivalTerminal) {
+      options.push(arrivalTerminal);
     }
     // Add more terminals if available
     return options;
-  }, [schedule?.route?.arrival_terminal]);
+  }, [arrivalTerminal]);
 
   const handleSeatClick = (seatId: string, seatNumber: number) => {
     if (selectedSeatIds.includes(seatId)) {
