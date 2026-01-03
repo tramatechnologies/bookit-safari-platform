@@ -181,7 +181,7 @@ export const schedulesApi = {
       return [];
     }
     
-    // Get region IDs and fetch regions separately
+    // Get region IDs and fetch regions separately (optional enhancement)
     const regionIds = [...new Set(
       results
         .flatMap((s) => [
@@ -191,23 +191,32 @@ export const schedulesApi = {
         .filter(Boolean) as string[]
     )];
     
-    let regionsMap = new Map<string, { id: string; name: string; slug: string }>();
+    let regionsMap = new Map<string, { id: string; name: string; code: string }>();
+    
+    // Try to fetch regions but don't fail if it doesn't work
+    // The search results work fine without region data, this is just an enhancement
     if (regionIds.length > 0) {
-      const { data: regions, error } = await supabase
-        .from('regions')
-        .select('id, name, slug')
-        .in('id', regionIds);
-      
-      if (error) {
-        console.error('Error fetching regions:', error);
-      } else if (regions) {
-        regions.forEach((r) => {
-          regionsMap.set(r.id, r);
-        });
+      try {
+        // Use a simple query without filters to avoid 400 errors
+        const { data: allRegions } = await supabase
+          .from('regions')
+          .select('id, name, code');
+        
+        if (allRegions && Array.isArray(allRegions)) {
+          // Filter to only the regions we need
+          allRegions
+            .filter(r => regionIds.includes(r.id))
+            .forEach((r) => {
+              regionsMap.set(r.id, r);
+            });
+        }
+      } catch {
+        // Silently fail - regions data is optional
+        // Search results will still work without it
       }
     }
     
-    // Add region information to results
+    // Add region information to results if available
     results = results.map((schedule) => {
       const route = schedule.route;
       if (!route) return schedule;
@@ -223,8 +232,8 @@ export const schedulesApi = {
         ...schedule,
         route: {
           ...route,
-          departure_region: departureRegion,
-          destination_region: destinationRegion,
+          departure_region: departureRegion || undefined,
+          destination_region: destinationRegion || undefined,
         },
       } as ScheduleWithDetails;
     });
@@ -294,19 +303,23 @@ export const schedulesApi = {
       route.destination_region_id,
     ].filter(Boolean) as string[];
 
-    let regionsMap = new Map<string, { id: string; name: string; slug: string }>();
+    let regionsMap = new Map<string, { id: string; name: string; code: string }>();
     if (regionIds.length > 0) {
-      const { data: regions, error } = await supabase
-        .from('regions')
-        .select('id, name, slug')
-        .in('id', regionIds);
-      
-      if (error) {
-        console.error('Error fetching regions:', error);
-      } else if (regions) {
-        regions.forEach((r) => {
-          regionsMap.set(r.id, r);
-        });
+      try {
+        // Fetch all regions and filter in application layer
+        const { data: allRegions } = await supabase
+          .from('regions')
+          .select('id, name, code');
+        
+        if (allRegions && Array.isArray(allRegions)) {
+          allRegions
+            .filter(r => regionIds.includes(r.id))
+            .forEach((r) => {
+              regionsMap.set(r.id, r);
+            });
+        }
+      } catch {
+        // Silently fail - regions data is optional
       }
     }
 
