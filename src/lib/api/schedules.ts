@@ -8,8 +8,8 @@ export interface ScheduleWithDetails extends Schedule {
     id: string;
     departure_region_id: string | null;
     destination_region_id: string | null;
-    departure_region: { id: string; name: string; code: string } | null;
-    destination_region: { id: string; name: string; code: string } | null;
+    departure_region: { id: string; name: string; slug: string } | null;
+    destination_region: { id: string; name: string; slug: string } | null;
     departure_terminal: string | null;
     arrival_terminal: string | null;
     duration_hours: number | null;
@@ -46,7 +46,7 @@ export const schedulesApi = {
   // Search schedules
   async searchSchedules(filters: SearchFilters): Promise<ScheduleWithDetails[]> {
     // Use database function to bypass RLS issues with PostgREST
-    const { data: schedules, error } = await supabase.rpc('get_active_schedules', {
+    const { data: schedules, error } = await (supabase.rpc as any)('get_active_schedules', {
       p_departure_date: filters.date || new Date().toISOString().split('T')[0],
       p_min_price: filters.minPrice || null,
       p_max_price: filters.maxPrice || null,
@@ -64,7 +64,7 @@ export const schedulesApi = {
     // Fetch routes separately using database function to bypass RLS issues
     let routes: any[] = [];
     if (routeIds.length > 0) {
-      const { data: routesData, error: routesError } = await supabase.rpc('get_routes_by_ids', {
+      const { data: routesData, error: routesError } = await (supabase.rpc as any)('get_routes_by_ids', {
         p_route_ids: routeIds,
       });
       if (routesError) {
@@ -78,7 +78,7 @@ export const schedulesApi = {
     // Fetch buses separately using database function to bypass RLS issues
     let buses: any[] = [];
     if (busIds.length > 0) {
-      const { data: busesData, error: busesError } = await supabase.rpc('get_buses_by_ids', {
+      const { data: busesData, error: busesError } = await (supabase.rpc as any)('get_buses_by_ids', {
         p_bus_ids: busIds,
       });
       if (busesError) {
@@ -133,7 +133,7 @@ export const schedulesApi = {
     if (operatorIds.length > 0) {
       // Query operators by IDs using database function to bypass RLS issues
       let operators: any[] = [];
-      const { data: operatorsData, error: operatorsError } = await supabase.rpc('get_bus_operators_by_ids', {
+      const { data: operatorsData, error: operatorsError } = await (supabase.rpc as any)('get_bus_operators_by_ids', {
         p_operator_ids: operatorIds,
       });
       if (operatorsError) {
@@ -191,14 +191,16 @@ export const schedulesApi = {
         .filter(Boolean) as string[]
     )];
     
-    let regionsMap = new Map<string, { id: string; name: string; code: string }>();
+    let regionsMap = new Map<string, { id: string; name: string; slug: string }>();
     if (regionIds.length > 0) {
-      const { data: regions } = await supabase
+      const { data: regions, error } = await supabase
         .from('regions')
-        .select('id, name, code')
+        .select('id, name, slug')
         .in('id', regionIds);
       
-      if (regions) {
+      if (error) {
+        console.error('Error fetching regions:', error);
+      } else if (regions) {
         regions.forEach((r) => {
           regionsMap.set(r.id, r);
         });
@@ -259,7 +261,7 @@ export const schedulesApi = {
   // Get schedule by ID
   async getScheduleById(scheduleId: string): Promise<ScheduleWithDetails | null> {
     // Use database function to get schedule by ID
-    const { data: scheduleData, error: scheduleError } = await supabase.rpc('get_schedule_by_id', {
+    const { data: scheduleData, error: scheduleError } = await (supabase.rpc as any)('get_schedule_by_id', {
       p_schedule_id: scheduleId,
     });
 
@@ -277,8 +279,8 @@ export const schedulesApi = {
 
     // Fetch route, bus, and operator in parallel
     const [routeRes, busRes] = await Promise.all([
-      supabase.rpc('get_routes_by_ids', { p_route_ids: [routeId] }),
-      supabase.rpc('get_buses_by_ids', { p_bus_ids: [busId] }),
+      (supabase.rpc as any)('get_routes_by_ids', { p_route_ids: [routeId] }),
+      (supabase.rpc as any)('get_buses_by_ids', { p_bus_ids: [busId] }),
     ]);
 
     const route = routeRes.data?.[0] || null;
@@ -292,14 +294,16 @@ export const schedulesApi = {
       route.destination_region_id,
     ].filter(Boolean) as string[];
 
-    let regionsMap = new Map<string, { id: string; name: string; code: string }>();
+    let regionsMap = new Map<string, { id: string; name: string; slug: string }>();
     if (regionIds.length > 0) {
-      const { data: regions } = await supabase
+      const { data: regions, error } = await supabase
         .from('regions')
-        .select('id, name, code')
+        .select('id, name, slug')
         .in('id', regionIds);
       
-      if (regions) {
+      if (error) {
+        console.error('Error fetching regions:', error);
+      } else if (regions) {
         regions.forEach((r) => {
           regionsMap.set(r.id, r);
         });
@@ -310,7 +314,7 @@ export const schedulesApi = {
     const operatorId = route.operator_id;
     let operator = null;
     if (operatorId) {
-      const { data: operators } = await supabase.rpc('get_bus_operators_by_ids', {
+      const { data: operators } = await (supabase.rpc as any)('get_bus_operators_by_ids', {
         p_operator_ids: [operatorId],
       });
       operator = operators?.[0] || null;
@@ -345,7 +349,7 @@ export const schedulesApi = {
 
   // Get available seats for a schedule
   async getAvailableSeats(scheduleId: string): Promise<number> {
-    const { data, error } = await supabase.rpc('get_available_seats', {
+    const { data, error } = await (supabase.rpc as any)('get_available_seats', {
       p_schedule_id: scheduleId,
     });
 
@@ -355,7 +359,7 @@ export const schedulesApi = {
 
   // Get booked seat numbers for a schedule on a specific date
   async getBookedSeats(scheduleId: string, departureDate: string): Promise<number[]> {
-    const { data, error } = await supabase.rpc('get_booked_seats', {
+    const { data, error } = await (supabase.rpc as any)('get_booked_seats', {
       p_schedule_id: scheduleId,
       p_departure_date: departureDate,
     });
