@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import OptimizedImage from '@/components/Image';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -107,10 +108,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         {/* Logo */}
         <div className={`p-6 border-b border-border flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
           <Link to="/" className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
-            <img 
+            <OptimizedImage 
               src="/images/logo.png" 
               alt="BookitSafari Logo" 
               className="h-8 w-auto object-contain"
+              width={32}
+              height={32}
+              priority={true}
             />
             {!isCollapsed && (
               <span className="font-display text-lg font-bold text-foreground">

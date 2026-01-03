@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Calendar, Clock, MapPin, Users, CreditCard, User, Phone, Mail, Bus } from 'lucide-react';
 import { formatPrice } from '@/lib/constants';
+import OptimizedImage from '@/components/Image';
 
 interface BookingSummaryProps {
   schedule: {
@@ -36,7 +37,7 @@ interface BookingSummaryProps {
   dropOffPoint?: string;
 }
 
-export const BookingSummary: React.FC<BookingSummaryProps> = ({
+export const BookingSummary: React.FC<BookingSummaryProps> = memo(({
   schedule,
   selectedSeats,
   passengerInfo,
@@ -155,10 +156,12 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
         {schedule.operator && (
           <div className="flex items-center gap-3">
             {schedule.operator.logo_url ? (
-              <img
+              <OptimizedImage
                 src={schedule.operator.logo_url}
                 alt={schedule.operator.company_name || 'Operator logo'}
                 className="w-10 h-10 rounded-lg object-cover border border-border"
+                width={40}
+                height={40}
               />
             ) : (
               <Users className="w-5 h-5 text-muted-foreground" />
@@ -257,5 +260,7 @@ export const BookingSummary: React.FC<BookingSummaryProps> = ({
       </div>
     </div>
   );
-};
+});
+
+BookingSummary.displayName = 'BookingSummary';
 

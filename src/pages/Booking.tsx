@@ -1,16 +1,16 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Loader2, AlertCircle, ChevronDown, Users, Bus } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Users, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { SeatLayout, type SeatLayoutType, getSeatNumberFromId } from '@/components/SeatLayout';
+import { type SeatLayoutType, getSeatNumberFromId } from '@/components/SeatLayout';
 import { BookingSummary } from '@/components/BookingSummary';
-import { PassengerForm, type PassengerInfo } from '@/components/PassengerForm';
+import { type PassengerInfo } from '@/components/PassengerForm';
+import { SeatSelectionSection } from '@/components/SeatSelectionSection';
+import { TerminalSelectionSection } from '@/components/TerminalSelectionSection';
+import { PassengerFormSection } from '@/components/PassengerFormSection';
 import { useSchedule, useAvailableSeats, useBookedSeats } from '@/hooks/use-schedules';
 import { useCreateBooking } from '@/hooks/use-bookings';
 import { useAuth } from '@/hooks/use-auth';
@@ -54,8 +54,6 @@ const Booking = () => {
   }));
 
   // Extract stable values for dependencies
-  const departureTerminal = schedule?.route?.departure_terminal || null;
-  const arrivalTerminal = schedule?.route?.arrival_terminal || null;
   const seatLayout = schedule?.bus?.seat_layout || 'layout1';
   const busTotalSeats = schedule?.bus?.total_seats || 0;
   const schedulePrice = Number(schedule?.price_tzs) || 0;
@@ -69,10 +67,6 @@ const Booking = () => {
     .filter(n => n > 0);
 
   const totalPrice = selectedSeatNumbers.length * schedulePrice;
-
-  // Get terminal options for boarding and drop-off (calculate directly to avoid dependency issues)
-  const boardingOptions: string[] = departureTerminal ? [departureTerminal] : [];
-  const dropOffOptions: string[] = arrivalTerminal ? [arrivalTerminal] : [];
 
   const handleSeatClick = useCallback((seatId: string, seatNumber: number) => {
     setSelectedSeatIds((prevIds) => {
@@ -427,7 +421,7 @@ const Booking = () => {
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Operator & Bus Information */}
-              <div className="bg-card rounded-2xl border border-border p-6">
+              <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
                 <h2 className="font-display text-xl font-bold mb-4">Company & Bus Information</h2>
                 <div className="space-y-4">
                   {/* Operator Info */}
@@ -507,204 +501,35 @@ const Booking = () => {
               </div>
 
               {/* Seat Selection */}
-              <div className="bg-card rounded-2xl border border-border p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-display text-2xl font-bold">SELECT YOUR SEAT</h2>
-                  <div className="text-sm text-muted-foreground">
-                    {availableSeats} seats available
-                  </div>
-                </div>
-
-                {/* Passenger Count Selector */}
-                <div className="mb-6 p-4 bg-muted/50 rounded-lg">
-                  <Label htmlFor="passenger_count" className="text-sm font-medium mb-2 block">
-                    Number of Passengers *
-                  </Label>
-                  <Select
-                    value={numberOfPassengers.toString()}
-                    onValueChange={(value) => handlePassengerCountChange(parseInt(value))}
-                  >
-                    <SelectTrigger id="passenger_count" className="w-full max-w-[200px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: Math.min(10, availableSeats) }, (_, i) => i + 1).map((count) => (
-                        <SelectItem key={count} value={count.toString()}>
-                          {count} {count === 1 ? 'Passenger' : 'Passengers'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Select {numberOfPassengers} seat{numberOfPassengers > 1 ? 's' : ''} for {numberOfPassengers} passenger{numberOfPassengers > 1 ? 's' : ''}
-                  </p>
-                </div>
-
-                <p className="text-sm text-muted-foreground mb-6">
-                  {selectedSeatIds.length === 0
-                    ? `Click on ${numberOfPassengers} seat${numberOfPassengers > 1 ? 's' : ''} to select ${numberOfPassengers === 1 ? 'it' : 'them'}`
-                    : selectedSeatIds.length < numberOfPassengers
-                    ? `Select ${numberOfPassengers - selectedSeatIds.length} more seat${numberOfPassengers - selectedSeatIds.length > 1 ? 's' : ''}`
-                    : 'All seats selected. You can click on a seat again to deselect it.'}
-                </p>
-
-                {/* Seat Map */}
-                <div className="space-y-4">
-                  {/* Legend */}
-                  <div className="flex items-center gap-6 text-sm mb-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border border-gray-300 bg-white" />
-                      <span className="text-muted-foreground">Available</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border border-green-500 bg-green-500" />
-                      <span className="text-muted-foreground">Selected</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded border border-red-500 bg-red-500 opacity-75" />
-                      <span className="text-muted-foreground">Unavailable</span>
-                    </div>
-                  </div>
-
-                  {/* Bus Layout */}
-                  <div className="bg-muted/30 rounded-lg p-6">
-                    <SeatLayout
-                      layoutType={seatLayoutType}
-                      totalSeats={busTotalSeats}
-                      availableSeats={availableSeats}
-                      bookedSeats={bookedSeats}
-                      selectedSeats={selectedSeatIds}
-                      onSeatClick={handleSeatClick}
-                      maxSelections={numberOfPassengers}
-                    />
-                  </div>
-
-                  {selectedSeatIds.length > 0 && (
-                    <div className="mt-4 p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                      <p className="text-sm font-medium mb-2">SEAT SELECTION</p>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Seats selected: {selectedSeatIds.length} / {numberOfPassengers}
-                        {selectedSeatIds.length < numberOfPassengers && (
-                          <span className="text-amber-600 ml-2">
-                            (Select {numberOfPassengers - selectedSeatIds.length} more seat{numberOfPassengers - selectedSeatIds.length > 1 ? 's' : ''})
-                          </span>
-                        )}
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedSeatIds.map((seatId) => (
-                          <span
-                            key={seatId}
-                            className="px-3 py-1 bg-green-500 text-white rounded-full text-sm font-medium"
-                          >
-                            Seat {seatId}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <SeatSelectionSection
+                schedule={schedule}
+                numberOfPassengers={numberOfPassengers}
+                selectedSeatIds={selectedSeatIds}
+                availableSeats={availableSeats}
+                bookedSeats={bookedSeats}
+                onSeatClick={handleSeatClick}
+                onPassengerCountChange={handlePassengerCountChange}
+              />
 
               {/* Boarding and Drop-off Points */}
-              <div className="bg-card rounded-2xl border border-border p-6">
-                <h2 className="font-display text-2xl font-bold mb-4">Select Terminals</h2>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="boarding">BOARDING POINT</Label>
-                    <Select value={boardingPoint} onValueChange={setBoardingPoint}>
-                      <SelectTrigger id="boarding" className="w-full">
-                        <SelectValue placeholder="Select boarding point" />
-                        <ChevronDown className="w-4 h-4 opacity-50" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {boardingOptions.length > 0 ? (
-                          boardingOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value={schedule.route?.departure_terminal || ''} disabled>
-                            {schedule.route?.departure_terminal || 'No terminals available'}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="dropoff">DROP-OFF POINT</Label>
-                    <Select value={dropOffPoint} onValueChange={setDropOffPoint}>
-                      <SelectTrigger id="dropoff" className="w-full">
-                        <SelectValue placeholder="Select drop-off point" />
-                        <ChevronDown className="w-4 h-4 opacity-50" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {dropOffOptions.length > 0 ? (
-                          dropOffOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {option}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value={schedule.route?.arrival_terminal || ''} disabled>
-                            {schedule.route?.arrival_terminal || 'No terminals available'}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
+              <TerminalSelectionSection
+                schedule={schedule}
+                boardingPoint={boardingPoint}
+                dropOffPoint={dropOffPoint}
+                onBoardingPointChange={setBoardingPoint}
+                onDropOffPointChange={setDropOffPoint}
+              />
 
               {/* Passenger Information */}
-              {selectedSeatIds.length > 0 && (
-                <div className="bg-card rounded-2xl border border-border p-6">
-                  <h2 className="font-display text-2xl font-bold mb-4">Passenger Information</h2>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Please provide details for each passenger. The first passenger's contact information will be used for booking confirmation.
-                  </p>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {Array.from(new Set(selectedSeatIds)).map((seatId, index) => (
-                      <PassengerForm
-                        key={`${seatId}-${index}`}
-                        passengerNumber={index + 1}
-                        seatId={seatId}
-                        passenger={passengers[seatId] || {
-                          name: '',
-                          gender: '',
-                          category: '',
-                          phone: index === 0 ? passengerInfo.phone : undefined,
-                          email: index === 0 ? passengerInfo.email : undefined,
-                        }}
-                        onChange={(passenger) => handlePassengerChange(seatId, passenger)}
-                        canRemove={Array.from(new Set(selectedSeatIds)).length > 1 && index > 0}
-                        errors={errors[seatId] || {}}
-                      />
-                    ))}
-
-                  <Button
-                    type="submit"
-                    variant="teal"
-                    size="lg"
-                    className="w-full"
-                    disabled={createBooking.isPending || selectedSeatNumbers.length === 0}
-                  >
-                    {createBooking.isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Proceed to Payment
-                      </>
-                    )}
-                  </Button>
-                </form>
-                </div>
-              )}
+              <PassengerFormSection
+                selectedSeatIds={selectedSeatIds}
+                passengers={passengers}
+                passengerInfo={passengerInfo}
+                errors={errors}
+                isSubmitting={createBooking.isPending}
+                onPassengerChange={handlePassengerChange}
+                onSubmit={handleSubmit}
+              />
             </div>
 
             {/* Sidebar - Booking Summary */}

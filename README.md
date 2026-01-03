@@ -2,6 +2,20 @@
 
 A modern bus booking platform for Tanzania, built with React, TypeScript, and Supabase.
 
+**Status:** ✅ Production Ready | Error Handling Complete | Rate Limiting Implemented
+
+## 📚 Documentation
+
+**Start here:** [MASTER_INDEX.md](MASTER_INDEX.md) - Complete guide to all documentation
+
+### Quick Links
+- **🚀 Getting Started:** [DEVELOPMENT_SETUP.md](DEVELOPMENT_SETUP.md)
+- **⚡ Quick Reference:** [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+- **📖 Error Handling Guide:** [ERROR_HANDLING_GUIDE.md](ERROR_HANDLING_GUIDE.md)
+- **💻 Integration Examples:** [INTEGRATION_EXAMPLES.md](INTEGRATION_EXAMPLES.md)
+- **📋 Implementation Checklist:** [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)
+- **📊 Project Status:** [PROJECT_STATUS_REPORT.md](PROJECT_STATUS_REPORT.md)
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID

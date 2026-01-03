@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Calendar, Edit, Trash2, Loader2, AlertCircle, Clock, Bus, MapPin } from 'lucide-react';
+import { Plus, Calendar, Edit, Trash2, Loader2, AlertCircle, Clock, Bus, MapPin, TrendingDown, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimeScheduleTrips } from '@/hooks/use-realtime-trips';
 import { formatPrice } from '@/lib/constants';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,12 +29,23 @@ interface Schedule {
   is_active: boolean;
 }
 
+interface Trip {
+  id: string;
+  schedule_id: string;
+  trip_date: string;
+  available_seats: number;
+  status: string;
+  created_at: string;
+}
+
 const OperatorSchedules = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const [selectedScheduleForTrips, setSelectedScheduleForTrips] = useState<string | null>(null);
+  const [tripGenerationDays, setTripGenerationDays] = useState('30');
   const [formData, setFormData] = useState({
     route_id: '',
     bus_id: '',
@@ -108,6 +121,28 @@ const OperatorSchedules = () => {
     },
     enabled: !!operatorId && !!routes,
   });
+
+  // Fetch trips for selected schedule
+  const { data: trips, isLoading: tripsLoading } = useQuery({
+    queryKey: ['trips-by-schedule', selectedScheduleForTrips],
+    queryFn: async () => {
+      if (!selectedScheduleForTrips) return [];
+      
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('schedule_id', selectedScheduleForTrips)
+        .gte('trip_date', new Date().toISOString().split('T')[0])
+        .order('trip_date', { ascending: true });
+      
+      if (error) throw error;
+      return data as Trip[];
+    },
+    enabled: !!selectedScheduleForTrips,
+  });
+
+  // Real-time subscription for trips
+  const { isConnected: isRealtimeConnected } = useRealtimeScheduleTrips(selectedScheduleForTrips);
 
   // Create/Update schedule mutation
   const scheduleMutation = useMutation({
@@ -187,6 +222,35 @@ const OperatorSchedules = () => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to deactivate schedule.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Generate trips mutation
+  const generateTripsMutation = useMutation({
+    mutationFn: async (scheduleId: string) => {
+      const days = parseInt(tripGenerationDays) || 30;
+      const { data, error } = await supabase.rpc('generate_trips_from_schedules', {
+        p_days_ahead: days,
+        p_schedule_id: scheduleId,
+      });
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['trips-by-schedule', selectedScheduleForTrips] });
+      const tripCount = Array.isArray(data) ? data.length : 0;
+      toast({
+        title: 'Trips Generated',
+        description: `Successfully generated ${tripCount} trips for the next ${tripGenerationDays} days.`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to generate trips.',
         variant: 'destructive',
       });
     },
@@ -273,90 +337,197 @@ const OperatorSchedules = () => {
           {/* Schedules List */}
           {schedules && schedules.length > 0 ? (
             <div className="space-y-4">
-              {schedules.map((schedule) => (
-                <div
-                  key={schedule.id}
-                  className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                        <Calendar className="w-6 h-6 text-primary" />
+              {schedules.map((schedule) => {
+                const totalTripsForSchedule = trips?.filter(t => t.schedule_id === schedule.id).length || 0;
+                const isScheduleSelected = selectedScheduleForTrips === schedule.id;
+                
+                return (
+                  <div key={schedule.id}>
+                    <div
+                      className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => setSelectedScheduleForTrips(isScheduleSelected ? null : schedule.id)}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                            <Calendar className="w-6 h-6 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg">
+                              {new Date(schedule.departure_date).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                              })}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {getRouteName(schedule.route_id)} • {getBusName(schedule.bus_id)}
+                            </p>
+                          </div>
+                          {isRealtimeConnected && isScheduleSelected && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-green-500/10 rounded-full">
+                              <Zap className="w-3 h-3 text-green-500" />
+                              <span className="text-xs text-green-600 font-medium">Live</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEdit(schedule);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm('Are you sure you want to deactivate this schedule?')) {
+                                deleteMutation.mutate(schedule.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {new Date(schedule.departure_date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {getRouteName(schedule.route_id)} • {getBusName(schedule.bus_id)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(schedule)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          if (confirm('Are you sure you want to deactivate this schedule?')) {
-                            deleteMutation.mutate(schedule.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
 
-                  <div className="grid md:grid-cols-4 gap-4">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Departure</p>
-                        <p className="font-medium">{schedule.departure_time.substring(0, 5)}</p>
-                      </div>
-                    </div>
+                      <div className="grid md:grid-cols-5 gap-4">
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Departure</p>
+                            <p className="font-medium">{schedule.departure_time.substring(0, 5)}</p>
+                          </div>
+                        </div>
 
-                    {schedule.arrival_time && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        {schedule.arrival_time && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm text-muted-foreground">Arrival</p>
+                              <p className="font-medium">{schedule.arrival_time.substring(0, 5)}</p>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <Bus className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm text-muted-foreground">Seats</p>
+                            <p className="font-medium">{schedule.available_seats}</p>
+                          </div>
+                        </div>
+
                         <div>
-                          <p className="text-sm text-muted-foreground">Arrival</p>
-                          <p className="font-medium">{schedule.arrival_time.substring(0, 5)}</p>
+                          <p className="text-sm text-muted-foreground">Price</p>
+                          <p className="font-medium text-teal">
+                            {formatPrice(schedule.price_tzs)}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground">Trips Generated</p>
+                          <p className="font-medium text-primary">{totalTripsForSchedule}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Trips for this schedule */}
+                    {isScheduleSelected && (
+                      <div className="bg-muted/30 rounded-2xl border border-border p-6 mt-2 ml-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-5 h-5 text-primary" />
+                            <h4 className="font-semibold">Generated Trips</h4>
+                            {tripsLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => generateTripsMutation.mutate(schedule.id)}
+                            disabled={generateTripsMutation.isPending}
+                          >
+                            {generateTripsMutation.isPending ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Generating...
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Generate More Trips
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        {trips && trips.length > 0 ? (
+                          <div className="space-y-2 max-h-96 overflow-y-auto">
+                            {trips.map((trip) => (
+                              <div
+                                key={trip.id}
+                                className="flex items-center justify-between bg-card rounded-lg p-3 border border-border/50"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                                  <div>
+                                    <p className="font-medium text-sm">
+                                      {new Date(trip.trip_date).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <div className="text-right">
+                                    <p className="text-xs text-muted-foreground">Available Seats</p>
+                                    <p className="font-semibold text-sm">{trip.available_seats}</p>
+                                  </div>
+                                  <Badge
+                                    variant={trip.status === 'scheduled' ? 'default' : 'secondary'}
+                                  >
+                                    {trip.status}
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            No trips generated yet. Click "Generate More Trips" to create trips for upcoming dates.
+                          </p>
+                        )}
+
+                        <div className="mt-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                          <label className="text-sm font-medium">
+                            Generate trips for how many days ahead?
+                          </label>
+                          <div className="flex gap-2 mt-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              max="365"
+                              value={tripGenerationDays}
+                              onChange={(e) => setTripGenerationDays(e.target.value)}
+                              className="max-w-xs"
+                            />
+                            <span className="text-xs text-muted-foreground flex items-center">days</span>
+                          </div>
                         </div>
                       </div>
                     )}
-
-                    <div className="flex items-center gap-2">
-                      <Bus className="w-4 h-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Available Seats</p>
-                        <p className="font-medium">{schedule.available_seats}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Price</p>
-                        <p className="font-medium text-teal">
-                          {formatPrice(schedule.price_tzs)}
-                        </p>
-                      </div>
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <Alert>

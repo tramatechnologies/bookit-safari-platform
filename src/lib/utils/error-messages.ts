@@ -175,49 +175,143 @@ export function formatVerificationError(error: any): { title: string; descriptio
 }
 
 /**
- * Formats payment errors
+ * Formats payment errors with actionable messages
  */
 export function formatPaymentError(error: any): { title: string; description: string } {
   const errorMessage = (error?.message || '').toLowerCase();
+  const fullMessage = error?.message || '';
 
-  if (errorMessage.includes('insufficient') || errorMessage.includes('balance')) {
+  // Payment method not activated / unavailable
+  if (
+    errorMessage.includes('unavailable') ||
+    errorMessage.includes('not available') ||
+    errorMessage.includes('not activated') ||
+    errorMessage.includes('no available') ||
+    errorMessage.includes('payment method') ||
+    errorMessage.includes('activate')
+  ) {
+    return {
+      title: 'Payment Method Not Available',
+      description: 'This payment method is not activated on your account. Please activate it in your mobile money app or try a different payment method.',
+    };
+  }
+
+  // Invalid phone number
+  if (
+    (errorMessage.includes('invalid') && errorMessage.includes('phone')) ||
+    errorMessage.includes('invalid order reference') ||
+    errorMessage.includes('invalid phone number')
+  ) {
+    return {
+      title: 'Invalid Phone Number',
+      description: 'Please enter a valid Tanzanian mobile number with country code. Examples: +255712345678, 255712345678, or 0712345678.',
+    };
+  }
+
+  // Insufficient funds
+  if (
+    errorMessage.includes('insufficient') ||
+    errorMessage.includes('balance') ||
+    errorMessage.includes('not enough')
+  ) {
     return {
       title: 'Insufficient Funds',
-      description: 'Your mobile money account does not have sufficient funds. Please add money to your account and try again.',
+      description: 'Your mobile money account does not have enough balance. Please add money to your account and try again.',
     };
   }
 
-  if (errorMessage.includes('cancelled') || errorMessage.includes('canceled')) {
-    return {
-      title: 'Payment Cancelled',
-      description: 'The payment was cancelled. You can try again when you\'re ready.',
-    };
-  }
-
-  if (errorMessage.includes('timeout') || errorMessage.includes('expired')) {
-    return {
-      title: 'Payment Timeout',
-      description: 'The payment request timed out. Please try again and complete the payment within the time limit.',
-    };
-  }
-
-  if (errorMessage.includes('network') || errorMessage.includes('connection')) {
+  // Network/connection errors
+  if (
+    errorMessage.includes('network') ||
+    errorMessage.includes('connection') ||
+    errorMessage.includes('timeout') ||
+    errorMessage.includes('fetch') ||
+    error?.status === 0
+  ) {
     return {
       title: 'Connection Error',
       description: 'Unable to connect to the payment service. Please check your internet connection and try again.',
     };
   }
 
-  if (errorMessage.includes('invalid') && errorMessage.includes('phone')) {
+  // Authentication/credentials errors
+  if (
+    errorMessage.includes('auth') ||
+    errorMessage.includes('unauthorized') ||
+    errorMessage.includes('forbidden') ||
+    error?.status === 401 ||
+    error?.status === 403
+  ) {
     return {
-      title: 'Invalid Phone Number',
-      description: 'The phone number provided is invalid. Please enter a valid Tanzanian mobile number (e.g., 0712345678).',
+      title: 'Payment Service Configuration Error',
+      description: 'There\'s an issue with the payment service configuration. Please contact support at support@bookitsafari.com.',
     };
   }
 
+  // User cancelled payment
+  if (
+    errorMessage.includes('cancelled') ||
+    errorMessage.includes('canceled') ||
+    errorMessage.includes('user cancelled')
+  ) {
+    return {
+      title: 'Payment Cancelled',
+      description: 'You cancelled the payment. No money was charged. You can try again whenever you\'re ready.',
+    };
+  }
+
+  // Rate limiting
+  if (
+    errorMessage.includes('too many') ||
+    errorMessage.includes('rate limit') ||
+    error?.status === 429
+  ) {
+    return {
+      title: 'Too Many Attempts',
+      description: 'You\'ve made too many payment attempts. Please wait a few minutes and try again.',
+    };
+  }
+
+  // Wrong PIN
+  if (errorMessage.includes('wrong pin') || errorMessage.includes('invalid pin')) {
+    return {
+      title: 'Wrong PIN',
+      description: 'You entered an incorrect PIN. The payment was not completed. Please try again with the correct PIN.',
+    };
+  }
+
+  // Blocked/suspicious transaction
+  if (
+    errorMessage.includes('blocked') ||
+    errorMessage.includes('suspicious') ||
+    errorMessage.includes('fraud')
+  ) {
+    return {
+      title: 'Transaction Blocked',
+      description: 'This transaction was blocked by your mobile money provider. Please try a smaller amount or contact your provider.',
+    };
+  }
+
+  // Server error
+  if (error?.status >= 500) {
+    return {
+      title: 'Service Temporarily Unavailable',
+      description: 'Our payment service is temporarily unavailable. Please try again in a few moments.',
+    };
+  }
+
+  // Checksum/validation error
+  if (errorMessage.includes('checksum') || errorMessage.includes('validation')) {
+    return {
+      title: 'Payment Validation Error',
+      description: 'There was an issue processing your payment. Please try again or contact support.',
+    };
+  }
+
+  // Generic error with the actual message if available
   return {
     title: 'Payment Error',
-    description: error?.message || 'An error occurred while processing your payment. Please try again or contact support if the problem persists.',
+    description: fullMessage || 'An error occurred while processing your payment. Please try again or contact support if the problem persists.',
   };
 }
 
@@ -270,7 +364,7 @@ export function formatProfileError(error: any): { title: string; description: st
   if (errorMessage.includes('phone') && errorMessage.includes('invalid')) {
     return {
       title: 'Invalid Phone Number',
-      description: 'Please enter a valid phone number (e.g., 0712345678).',
+      description: 'Please enter a valid Tanzanian mobile number. Examples: +255712345678, 255712345678, or 0712345678.',
     };
   }
 

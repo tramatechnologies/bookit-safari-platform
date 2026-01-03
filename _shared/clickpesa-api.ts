@@ -15,61 +15,60 @@ interface ClickPesaAuthResponse {
 }
 
 interface PreviewPushRequest {
-  mobile_number: string;
+  phoneNumber: string;
   amount: number;
   currency: string;
-  order_reference: string;
-  payment_method: 'mpesa' | 'tigopesa' | 'airtel';
-  description?: string;
+  orderReference: string;
 }
 
 interface PreviewPushResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    mobile_number: string;
-    amount: number;
-    currency: string;
-    payment_method: string;
-    available: boolean;
+  activeMethods: Array<{
+    name: string;
+    status: 'AVAILABLE' | 'UNAVAILABLE';
+    fee?: number;
+  }>;
+  sender?: {
+    accountName: string;
+    accountNumber: string;
+    accountProvider: string;
   };
 }
 
 interface InitiatePushRequest {
-  mobile_number: string;
+  phoneNumber: string;
   amount: number;
   currency: string;
-  order_reference: string;
-  payment_method: 'mpesa' | 'tigopesa' | 'airtel';
-  description?: string;
-  callback_url?: string;
+  orderReference: string;
 }
 
 interface InitiatePushResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    order_reference: string;
-    transaction_id?: string;
-    status: string;
-    mobile_number: string;
-    amount: number;
-    currency: string;
-  };
+  id: string;
+  status: 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'SETTLED';
+  channel: string;
+  orderReference: string;
+  collectedAmount?: string;
+  collectedCurrency: string;
+  createdAt: string;
+  clientId: string;
+  transactionId?: string;
 }
 
 interface PaymentStatusResponse {
-  success: boolean;
+  id: string;
+  status: 'SUCCESS' | 'SETTLED' | 'PROCESSING' | 'PENDING' | 'FAILED';
+  paymentReference: string;
+  orderReference: string;
+  collectedAmount: number;
+  collectedCurrency: string;
   message: string;
-  data?: {
-    order_reference: string;
-    transaction_id?: string;
-    status: 'pending' | 'completed' | 'failed' | 'cancelled';
-    mobile_number: string;
-    amount: number;
-    currency: string;
-    paid_at?: string;
+  updatedAt: string;
+  createdAt: string;
+  customer?: {
+    customerName: string;
+    customerPhoneNumber: string;
+    customerEmail?: string;
   };
+  clientId: string;
 }
 
 /**
@@ -108,6 +107,7 @@ async function getAuthToken(): Promise<string> {
 /**
  * Step 1: Preview USSD-PUSH Request
  * Validates payment details and verifies payment method availability
+ * Official ClickPesa endpoint: POST /third-parties/payments/preview-ussd-push-request
  */
 export async function previewPushRequest(
   request: PreviewPushRequest
@@ -115,26 +115,24 @@ export async function previewPushRequest(
   try {
     const token = await getAuthToken();
 
-    const response = await fetch(`${CLICKPESA_API_URL}/api/v1/payments/preview`, {
+    const response = await fetch(`${CLICKPESA_API_URL}/third-parties/payments/preview-ussd-push-request`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        mobile_number: request.mobile_number,
+        phoneNumber: request.phoneNumber,
         amount: request.amount,
         currency: request.currency || 'TZS',
-        order_reference: request.order_reference,
-        payment_method: request.payment_method,
-        description: request.description,
+        orderReference: request.orderReference,
       }),
     });
 
     const data: PreviewPushResponse = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || `Preview request failed: ${response.status}`);
+      throw new Error(`Preview request failed: ${response.status}`);
     }
 
     return data;
@@ -149,6 +147,7 @@ export async function previewPushRequest(
 /**
  * Step 2: Initiate USSD-PUSH Request
  * Sends the USSD-PUSH request to customer's mobile device
+ * Official ClickPesa endpoint: POST /third-parties/payments/initiate-ussd-push-request
  */
 export async function initiatePushRequest(
   request: InitiatePushRequest
@@ -156,27 +155,24 @@ export async function initiatePushRequest(
   try {
     const token = await getAuthToken();
 
-    const response = await fetch(`${CLICKPESA_API_URL}/api/v1/payments/push`, {
+    const response = await fetch(`${CLICKPESA_API_URL}/third-parties/payments/initiate-ussd-push-request`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        mobile_number: request.mobile_number,
+        phoneNumber: request.phoneNumber,
         amount: request.amount,
         currency: request.currency || 'TZS',
-        order_reference: request.order_reference,
-        payment_method: request.payment_method,
-        description: request.description,
-        callback_url: request.callback_url,
+        orderReference: request.orderReference,
       }),
     });
 
     const data: InitiatePushResponse = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || `Initiate push failed: ${response.status}`);
+      throw new Error(`Initiate push failed: ${response.status}`);
     }
 
     return data;
@@ -191,6 +187,7 @@ export async function initiatePushRequest(
 /**
  * Step 3: Check Payment Status
  * Queries for the payment status using order reference
+ * Official ClickPesa endpoint: GET /third-parties/payments/{orderReference}
  */
 export async function checkPaymentStatus(
   orderReference: string
@@ -199,7 +196,7 @@ export async function checkPaymentStatus(
     const token = await getAuthToken();
 
     const response = await fetch(
-      `${CLICKPESA_API_URL}/api/v1/payments/status/${orderReference}`,
+      `${CLICKPESA_API_URL}/third-parties/payments/${orderReference}`,
       {
         method: 'GET',
         headers: {
@@ -211,7 +208,7 @@ export async function checkPaymentStatus(
     const data: PaymentStatusResponse = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || `Status check failed: ${response.status}`);
+      throw new Error(`Status check failed: ${response.status}`);
     }
 
     return data;
@@ -227,7 +224,7 @@ export async function checkPaymentStatus(
  * Helper function to format mobile number for ClickPesa
  * Removes leading zeros and ensures proper format
  */
-export function formatMobileNumber(phone: string, paymentMethod: 'mpesa' | 'tigopesa' | 'airtel'): string {
+export function formatMobileNumber(phone: string, paymentMethod: 'mpesa' | 'tigopesa' | 'airtel' | 'halopesa'): string {
   // Remove all non-digit characters
   let digits = phone.replace(/\D/g, '');
 
@@ -249,7 +246,7 @@ export function formatMobileNumber(phone: string, paymentMethod: 'mpesa' | 'tigo
  */
 export function validateMobileNumber(
   phone: string,
-  paymentMethod: 'mpesa' | 'tigopesa' | 'airtel'
+  paymentMethod: 'mpesa' | 'tigopesa' | 'airtel' | 'halopesa'
 ): boolean {
   const formatted = formatMobileNumber(phone, paymentMethod);
   
@@ -270,6 +267,9 @@ export function validateMobileNumber(
       return prefix === '7';
     case 'airtel':
       // Airtel Money numbers typically start with 6 or 7
+      return prefix === '6' || prefix === '7';
+    case 'halopesa':
+      // HaloPesa numbers typically start with any valid operator prefix
       return prefix === '6' || prefix === '7';
     default:
       return true;

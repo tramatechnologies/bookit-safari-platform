@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bus } from 'lucide-react';
 
+// Type exports for backward compatibility
 export type SeatLayoutType = 'layout1' | 'layout2';
 
 export interface Seat {
@@ -13,64 +14,64 @@ export interface Seat {
   selected: boolean;
 }
 
+// Utility function for backward compatibility
+export const getSeatNumberFromId = (seatId: string, layoutType: SeatLayoutType, totalSeats: number): number => {
+  // Convert seat ID like "A1" to a seat number
+  const row = seatId.charCodeAt(0) - 65; // A=0, B=1, etc.
+  const col = parseInt(seatId.slice(1));
+  
+  // Calculate seat number based on layout
+  let seatNumber = 0;
+  
+  if (layoutType === 'layout1') {
+    // For layout1: rows A-M have variable columns, row N has 5
+    for (let r = 0; r < row; r++) {
+      if (r < 4 || r >= 7) { // Rows A-D and H-M have 4 seats
+        seatNumber += 4;
+      } else if (r === 4) { // Row E has 2 seats
+        seatNumber += 2;
+      } else if (r === 5 || r === 6) { // Rows F-G have 4 seats
+        seatNumber += 4;
+      }
+    }
+    // Add column offset for current row
+    if (row < 4 || row >= 7) { // Rows A-D, H-M
+      seatNumber += (5 - col);
+    } else if (row === 4) { // Row E
+      seatNumber += (3 - col);
+    } else { // Rows F-G
+      seatNumber += (5 - col);
+    }
+  } else {
+    // For layout2: all regular rows have 4 seats, row N has 5
+    for (let r = 0; r < row; r++) {
+      if (r < 13) {
+        seatNumber += 4;
+      }
+    }
+    seatNumber += (5 - col);
+  }
+  
+  return Math.min(seatNumber, totalSeats);
+};
+
+interface SeatLayoutRow {
+  row: string;
+  seats: (string | null)[];
+}
+
 interface SeatLayoutProps {
-  layoutType: SeatLayoutType;
+  layoutType?: SeatLayoutType;
   totalSeats: number;
-  availableSeats: number;
+  availableSeats?: number;
   bookedSeats: number[];
   selectedSeats: string[];
   onSeatClick: (seatId: string, seatNumber: number) => void;
   maxSelections?: number;
+  seatLayoutConfig?: SeatLayoutRow[] | null; // New prop for custom layouts
 }
 
-export const getSeatNumberFromId = (seatId: string, layoutType: SeatLayoutType, totalSeats: number): number => {
-  const seats = layoutType === 'layout1' ? generateLayout1() : generateLayout2();
-  const seat = seats.find(s => s.id === seatId);
-  return seat?.seatNumber || 0;
-};
-
-const generateLayout1 = (): Seat[] => {
-  const seats: Seat[] = [];
-  let seatNumber = 1;
-  const rowsWithLeftSeats = ['A', 'B', 'C', 'D', 'E', 'H', 'I', 'J', 'K', 'L', 'M'];
-  const allRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
-
-  for (const row of allRows) {
-    const hasLeftSeats = rowsWithLeftSeats.includes(row);
-    if (hasLeftSeats) {
-      seats.push({ id: `${row}4`, row, column: 4, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-      seats.push({ id: `${row}3`, row, column: 3, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-    }
-    seats.push({ id: `${row}2`, row, column: 2, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-    seats.push({ id: `${row}1`, row, column: 1, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-  }
-
-  for (let col = 5; col >= 1; col--) {
-    seats.push({ id: `N${col}`, row: 'N', column: col, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-  }
-
-  return seats;
-};
-
-const generateLayout2 = (): Seat[] => {
-  const seats: Seat[] = [];
-  let seatNumber = 1;
-  const allRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'];
-
-  for (const row of allRows) {
-    seats.push({ id: `${row}4`, row, column: 4, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-    seats.push({ id: `${row}3`, row, column: 3, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-    seats.push({ id: `${row}2`, row, column: 2, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-    seats.push({ id: `${row}1`, row, column: 1, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-  }
-
-  for (let col = 5; col >= 1; col--) {
-    seats.push({ id: `N${col}`, row: 'N', column: col, seatNumber: seatNumber++, exists: true, available: true, selected: false });
-  }
-
-  return seats;
-};
-
+// Wrapper component that adapts old interface to new visual component
 export const SeatLayout: React.FC<SeatLayoutProps> = ({
   layoutType,
   totalSeats,
@@ -78,148 +79,131 @@ export const SeatLayout: React.FC<SeatLayoutProps> = ({
   selectedSeats,
   onSeatClick,
   maxSelections = 5,
+  seatLayoutConfig,
 }) => {
-  const allSeats = layoutType === 'layout1' ? generateLayout1() : generateLayout2();
-  const rowsWithoutLeftSeats = layoutType === 'layout1' ? ['F', 'G'] : [];
+  // Use custom layout config if provided, otherwise use default layout
+  const seatLayout: SeatLayoutRow[] = seatLayoutConfig || [
+    { row: '1', seats: ['A3', 'A4', null, 'A2', 'A1'] },
+    { row: '2', seats: ['B3', 'B4', null, 'B2', 'B1'] },
+    { row: '3', seats: ['C3', 'C4', null, 'C2', 'C1'] },
+    { row: '4', seats: ['D3', 'D4', null, 'D2', 'D1'] },
+    { row: '5', seats: [null, null, null, 'E2', 'E1'] },
+    { row: '6', seats: ['F3', 'F4', null, 'F2', 'F1'] },
+    { row: '7', seats: ['G3', 'G4', null, 'G2', 'G1'] },
+    { row: '8', seats: ['H3', 'H4', null, 'H2', 'H1'] },
+    { row: '9', seats: ['I3', 'I4', null, 'I2', 'I1'] },
+    { row: '10', seats: ['J3', 'J4', null, 'J2', 'J1'] },
+    { row: '11', seats: ['K3', 'K4', null, 'K2', 'K1'] },
+    { row: '12', seats: ['L3', 'L4', null, 'L2', 'L1'] },
+    { row: '13', seats: ['M3', 'M4', null, 'M2', 'M1'] },
+    { row: '14', seats: ['N5', 'N4', 'N3', 'N2', 'N1'] }
+  ];
 
-  const seats = allSeats.map((seat) => ({
-    ...seat,
-    exists: seat.seatNumber <= totalSeats,
-    available: seat.seatNumber <= totalSeats && !bookedSeats.includes(seat.seatNumber),
-    selected: selectedSeats.includes(seat.id),
-  }));
+  // Convert selected seat IDs to seat numbers to check if booked
+  const selectedSeatNumbers = selectedSeats.map(id => getSeatNumberFromId(id, layoutType || 'layout1', totalSeats));
+  const bookedSeatIds = new Set(
+    seatLayout
+      .flatMap(row => row.seats.filter(Boolean))
+      .filter(seatId => {
+        const seatNumber = getSeatNumberFromId(seatId as string, layoutType || 'layout1', totalSeats);
+        return bookedSeats.includes(seatNumber);
+      })
+  );
 
-  const seatsByRow = seats.reduce((acc, seat) => {
-    if (!seat.exists) return acc;
-    if (!acc[seat.row]) acc[seat.row] = [];
-    acc[seat.row].push(seat);
-    return acc;
-  }, {} as Record<string, Seat[]>);
-
-  const allRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
-  const visibleRows = allRows.filter(row => seatsByRow[row]?.length > 0);
-
-  const handleSeatClick = (seat: Seat) => {
-    if (!seat.available) return;
-    if (seat.selected || selectedSeats.length < maxSelections) {
-      onSeatClick(seat.id, seat.seatNumber);
+  const toggleSeat = (seatId: string) => {
+    if (!seatId || bookedSeatIds.has(seatId)) return;
+    
+    const seatNumber = getSeatNumberFromId(seatId, layoutType || 'layout1', totalSeats);
+    if (seatNumber > 0) {
+      onSeatClick(seatId, seatNumber);
     }
   };
-
-  const SeatButton: React.FC<{ seat: Seat }> = ({ seat }) => {
-    // Determine button classes based on seat state
-    let buttonClasses = 'w-8 h-8 rounded border text-[10px] font-semibold transition-all duration-150 flex items-center justify-center';
-    
-    if (seat.selected) {
-      // Selected: Green
-      buttonClasses += ' bg-green-500 border-green-500 text-white shadow-md';
-    } else if (seat.available) {
-      // Available: White
-      buttonClasses += ' bg-white border-gray-300 text-gray-700 hover:border-teal-500 hover:bg-teal-50';
-    } else {
-      // Not available/Booked: Red
-      buttonClasses += ' bg-red-500 border-red-500 text-white cursor-not-allowed opacity-75';
-    }
-    
-    return (
-      <button
-        type="button"
-        onClick={() => handleSeatClick(seat)}
-        disabled={!seat.available}
-        className={buttonClasses}
-        title={seat.available ? `Seat ${seat.id}` : `Seat ${seat.id} - Booked`}
-      >
-        {seat.id}
-      </button>
-    );
-  };
-
-  const EmptySlot = () => <div className="w-8 h-8" />;
 
   return (
-    <div className="w-full max-w-[280px] mx-auto">
-      {/* Driver */}
-      <div className="flex justify-center mb-2">
-        <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center">
-          <Bus className="w-4 h-4 text-gray-400" />
+    <div className="w-full max-w-4xl mx-auto p-6">
+      <div className="bg-white rounded-2xl shadow-lg p-8">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Select Your Seats</h2>
+          <p className="text-gray-600">Total Seats Available: {totalSeats}</p>
         </div>
-      </div>
 
-      {/* Seats */}
-      <div className="space-y-0.5">
-        {visibleRows.map((rowLetter) => {
-          const rowSeats = seatsByRow[rowLetter] || [];
-          const isBackRow = rowLetter === 'N';
-          const hasLeftSide = !rowsWithoutLeftSeats.includes(rowLetter);
-
-          if (isBackRow) {
-            // Back row: 5 seats centered, ensure they fit
-            const sortedSeats = [...rowSeats].sort((a, b) => b.column - a.column);
-            return (
-              <div key={rowLetter} className="flex items-center justify-center">
-                <div className="w-4 text-[10px] text-gray-400 text-center">{rowLetter}</div>
-                <div className="flex gap-0.5 justify-center max-w-[220px]">
-                  {sortedSeats.map(seat => <SeatButton key={seat.id} seat={seat} />)}
-                </div>
-                <div className="w-4 text-[10px] text-gray-400 text-center">{rowLetter}</div>
-              </div>
-            );
-          }
-
-          // Regular row
-          const leftSeats = rowSeats.filter(s => s.column >= 3).sort((a, b) => b.column - a.column);
-          const rightSeats = rowSeats.filter(s => s.column <= 2).sort((a, b) => b.column - a.column);
-
-          return (
-            <div key={rowLetter} className="flex items-center justify-center">
-              <div className="w-4 text-[10px] text-gray-400 text-center">{rowLetter}</div>
-              <div className="flex items-center justify-center">
-                {/* Left side - fixed width */}
-                <div className="flex gap-0.5 w-[68px] justify-end">
-                  {hasLeftSide && leftSeats.length > 0 ? (
-                    leftSeats.map(seat => <SeatButton key={seat.id} seat={seat} />)
+        {/* Seat Map */}
+        <div className="space-y-3 mb-6">
+          {seatLayout.map((row, rowIndex) => (
+            <div key={rowIndex} className="flex justify-center items-center gap-2">
+              {row.seats.map((seat, seatIndex) => (
+                <React.Fragment key={seatIndex}>
+                  {seat ? (
+                    <button
+                      onClick={() => toggleSeat(seat)}
+                      disabled={bookedSeatIds.has(seat)}
+                      className={`
+                        w-12 h-12 rounded-lg font-semibold text-sm
+                        transition-all duration-200 transform
+                        ${selectedSeats.includes(seat)
+                          ? 'bg-green-500 text-white shadow-lg hover:scale-105'
+                          : bookedSeatIds.has(seat)
+                          ? 'bg-red-500 text-white cursor-not-allowed opacity-60'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300 hover:scale-105'
+                        }
+                      `}
+                      title={
+                        bookedSeatIds.has(seat)
+                          ? `Seat ${seat} - Booked`
+                          : selectedSeats.includes(seat)
+                          ? `Seat ${seat} - Selected`
+                          : `Seat ${seat}`
+                      }
+                    >
+                      {seat}
+                    </button>
                   ) : (
-                    <>
-                      <EmptySlot />
-                      <EmptySlot />
-                    </>
+                    <div className="w-12 h-12" />
                   )}
-                </div>
-                
-                {/* Aisle */}
-                <div className="w-4" />
-                
-                {/* Right side - fixed width */}
-                <div className="flex gap-0.5 w-[68px]">
-                  {rightSeats.map(seat => <SeatButton key={seat.id} seat={seat} />)}
-                </div>
-              </div>
-              <div className="w-4 text-[10px] text-gray-400 text-center">{rowLetter}</div>
+                </React.Fragment>
+              ))}
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
 
-      {/* Legend */}
-      <div className="flex justify-center gap-3 mt-3 text-[10px]">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded border border-gray-300 bg-white" />
-          <span className="text-gray-500">Available</span>
+        {/* Legend */}
+        <div className="flex justify-center gap-6 text-sm mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-gray-200 rounded" />
+            <span className="text-gray-600">Available</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-green-500 rounded" />
+            <span className="text-gray-600">Selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-red-500 rounded" />
+            <span className="text-gray-600">Booked</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-green-500" />
-          <span className="text-gray-500">Selected</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-red-500 opacity-60" />
-          <span className="text-gray-500">Booked</span>
-        </div>
-      </div>
 
-      {/* Selection count */}
-      <div className="mt-2 text-center text-xs text-gray-600">
-        Selected: <span className="font-bold text-green-500">{selectedSeats.length}</span> / {maxSelections}
+        {/* Selection count */}
+        <div className="text-center text-sm text-gray-600">
+          Selected: <span className="font-bold text-green-500">{selectedSeats.length}</span> / {maxSelections}
+        </div>
       </div>
     </div>
   );
 };
+
+const BusSeatLayout = () => {
+  return (
+    <SeatLayout
+      layoutType="layout1"
+      totalSeats={60}
+      availableSeats={60}
+      bookedSeats={[]}
+      selectedSeats={[]}
+      onSeatClick={() => {}}
+      maxSelections={5}
+    />
+  );
+};
+
+export default BusSeatLayout;

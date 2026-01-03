@@ -2,12 +2,42 @@ import { useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+/**
+ * Represents the current authentication state
+ * @interface AuthState
+ * @property {User|null} user - Current authenticated user or null
+ * @property {Session|null} session - Current user session or null
+ * @property {boolean} loading - Whether authentication state is being loaded
+ */
 export interface AuthState {
   user: User | null;
   session: Session | null;
   loading: boolean;
 }
 
+/**
+ * Custom hook for managing authentication
+ * Handles user sign in, sign up, sign out, and password reset
+ * Automatically refreshes session and listens for auth state changes
+ *
+ * @hook useAuth
+ * @returns {Object} Auth methods and state
+ * @returns {User|null} user - Current authenticated user
+ * @returns {Session|null} session - Current user session
+ * @returns {boolean} loading - Loading state
+ * @returns {Function} signIn - Sign in with email and password
+ * @returns {Function} signUp - Create new account
+ * @returns {Function} signOut - Sign out current user
+ * @returns {Function} resetPassword - Request password reset email
+ * @returns {Function} updateProfile - Update user profile data
+ * @returns {Function} refreshSession - Manually refresh session
+ *
+ * @example
+ * const { user, loading, signIn } = useAuth();
+ * if (loading) return <div>Loading...</div>;
+ * if (!user) return <div>Please sign in</div>;
+ * return <div>Welcome {user.email}</div>;
+ */
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,

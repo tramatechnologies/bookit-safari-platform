@@ -6,11 +6,45 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+/**
+ * Props for the ProtectedRoute component
+ * @interface ProtectedRouteProps
+ * @property {React.ReactNode} children - Components to render if user is authenticated
+ * @property {boolean} [requireEmailVerification=true] - Whether email verification is required
+ */
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireEmailVerification?: boolean;
 }
 
+/**
+ * ProtectedRoute Component
+ * Wraps routes that require authentication and optionally email verification
+ *
+ * Features:
+ * - Redirects unauthenticated users to /auth
+ * - Checks email verification status
+ * - Maintains original location for post-login redirect
+ * - Shows loading spinner while checking auth state
+ *
+ * @component
+ * @param {ProtectedRouteProps} props - Component props
+ * @returns {React.ReactElement} Either the protected component, email verification prompt, or redirect
+ *
+ * @example
+ * // Protect a route requiring authentication and email verification
+ * <Route
+ *   path="/dashboard"
+ *   element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
+ * />
+ *
+ * @example
+ * // Protect a route that doesn't require email verification
+ * <Route
+ *   path="/admin"
+ *   element={<ProtectedRoute requireEmailVerification={false}><AdminDashboard /></ProtectedRoute>}
+ * />
+ */
 export const ProtectedRoute = ({ children, requireEmailVerification = true }: ProtectedRouteProps) => {
   const { user, loading, refreshSession } = useAuth();
   const location = useLocation();

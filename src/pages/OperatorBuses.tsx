@@ -12,6 +12,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AmenitiesSelector } from '@/components/AmenitiesSelector';
+import { SeatLayoutConfigurator, type SeatLayoutRow } from '@/components/SeatLayoutConfigurator';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +26,7 @@ interface Bus {
   total_seats: number;
   amenities: string[] | null;
   seat_layout: string | null;
+  seat_layout_config: SeatLayoutRow[] | null;
   is_active: boolean;
 }
 
@@ -47,6 +49,7 @@ const OperatorBuses = () => {
     total_seats: 53,
     amenities: [] as string[],
     seat_layout: 'layout1' as SeatLayoutType,
+    seat_layout_config: null as SeatLayoutRow[] | null,
   });
 
   // Get operator ID
@@ -93,6 +96,7 @@ const OperatorBuses = () => {
         total_seats: busData.total_seats,
         amenities: busData.amenities.length > 0 ? busData.amenities : null,
         seat_layout: busData.seat_layout,
+        seat_layout_config: busData.seat_layout_config,
         is_active: true,
       };
 
@@ -171,6 +175,7 @@ const OperatorBuses = () => {
       total_seats: 53,
       amenities: [],
       seat_layout: 'layout1',
+      seat_layout_config: null,
     });
     setEditingBus(null);
   };
@@ -184,6 +189,7 @@ const OperatorBuses = () => {
       total_seats: bus.total_seats,
       amenities: bus.amenities || [],
       seat_layout: (bus.seat_layout as SeatLayoutType) || 'layout1',
+      seat_layout_config: bus.seat_layout_config || null,
     });
     setIsDialogOpen(true);
   };
@@ -282,7 +288,7 @@ const OperatorBuses = () => {
                     <div className="text-sm">
                       <span className="text-muted-foreground">Layout: </span>
                       <span className="font-medium capitalize">
-                        {bus.seat_layout || 'layout1'}
+                        {bus.seat_layout_config ? '📋 Custom' : bus.seat_layout || 'layout1'}
                       </span>
                     </div>
                     {bus.amenities && bus.amenities.length > 0 && (
@@ -422,6 +428,17 @@ const OperatorBuses = () => {
                     setFormData({ ...formData, amenities })
                   }
                 />
+
+                <div className="space-y-2">
+                  <Label>Seat Layout Configuration</Label>
+                  <SeatLayoutConfigurator
+                    value={formData.seat_layout_config}
+                    onChange={(config) =>
+                      setFormData({ ...formData, seat_layout_config: config })
+                    }
+                    totalSeats={formData.total_seats}
+                  />
+                </div>
 
                 <DialogFooter>
                   <Button

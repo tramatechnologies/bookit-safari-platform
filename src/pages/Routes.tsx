@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Clock, MapPin, Search } from 'lucide-react';
+import { ArrowRight, Clock, MapPin, Search, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Header from '@/components/Header';
@@ -30,14 +30,42 @@ const Routes = () => {
     date: format(tomorrow, 'yyyy-MM-dd'),
   });
 
-  const filteredRoutes = schedules?.filter(schedule => {
-    if (!searchTerm) return true;
-    const route = schedule.route;
-    const departure = route?.departure_region?.name || '';
-    const destination = route?.destination_region?.name || '';
-    return departure.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           destination.toLowerCase().includes(searchTerm.toLowerCase());
-  }) || [];
+  // Group schedules by route
+  const uniqueRoutes = useMemo(() => {
+    const routesMap = new Map<string, typeof schedules>();
+    
+    schedules?.forEach((schedule) => {
+      const routeId = schedule.route_id || 'unknown';
+      if (!routesMap.has(routeId)) {
+        routesMap.set(routeId, []);
+      }
+      routesMap.get(routeId)!.push(schedule);
+    });
+
+    return Array.from(routesMap.values()).map((routeSchedules) => {
+      const firstSchedule = routeSchedules[0];
+      const route = firstSchedule.route;
+      return {
+        routeId: firstSchedule.route_id,
+        departure: route?.departure_region?.name || 'N/A',
+        destination: route?.destination_region?.name || 'N/A',
+        departureRegionId: route?.departure_region_id,
+        destinationRegionId: route?.destination_region_id,
+        minPrice: Math.min(...routeSchedules.map(s => Number(s.price_tzs || 0))),
+        busCount: routeSchedules.length,
+        operator: route?.operator?.company_name || 'Operator',
+        schedules: routeSchedules,
+      };
+    });
+  }, [schedules]);
+
+  const filteredRoutes = useMemo(() => {
+    return uniqueRoutes.filter(route => {
+      if (!searchTerm) return true;
+      return route.departure.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             route.destination.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+  }, [uniqueRoutes, searchTerm]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,20 +117,16 @@ const Routes = () => {
             </div>
           ) : filteredRoutes.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredRoutes.map((schedule) => {
-                const route = schedule.route;
-                const departure = route?.departure_region?.name || 'N/A';
-                const destination = route?.destination_region?.name || 'N/A';
-                
+              {filteredRoutes.map((route) => {
                 return (
                   <div
-                    key={schedule.id}
+                    key={route.routeId}
                     className="group bg-card rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 border border-border/50 hover:-translate-y-1"
                   >
                     <div className="p-6 bg-gradient-to-br from-teal/5 to-amber/5">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex-1">
-                          <p className="text-lg font-semibold text-foreground">{departure}</p>
+                          <p className="text-lg font-semibold text-foreground">{route.departure}</p>
                           <p className="text-sm text-muted-foreground">Departure</p>
                         </div>
                         <div className="px-4">
@@ -111,7 +135,7 @@ const Routes = () => {
                           </div>
                         </div>
                         <div className="flex-1 text-right">
-                          <p className="text-lg font-semibold text-foreground">{destination}</p>
+                          <p className="text-lg font-semibold text-foreground">{route.destination}</p>
                           <p className="text-sm text-muted-foreground">Arrival</p>
                         </div>
                       </div>
@@ -120,22 +144,22 @@ const Routes = () => {
                     <div className="p-6 border-t border-border/50">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="w-4 h-4" />
-                          <span className="text-sm">{schedule.departure_time?.substring(0, 5) || 'N/A'}</span>
+                          <Bus className="w-4 h-4" />
+                          <span className="text-sm">{route.busCount} {route.busCount === 1 ? 'bus' : 'buses'} available</span>
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-muted-foreground">From</p>
                           <p className="text-xl font-bold text-teal">
-                            {formatPrice(schedule.price_tzs || 0)}
+                            {formatPrice(route.minPrice)}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4" />
-                        <span>{schedule.route?.operator?.company_name || 'Operator'}</span>
+                        <span>{route.operator}</span>
                       </div>
                       <Button variant="teal-outline" className="w-full" asChild>
-                        <Link to={`/search?from=${route?.departure_region_id}&to=${route?.destination_region_id}`}>
+                        <Link to={`/search?from=${route.departureRegionId}&to=${route.destinationRegionId}`}>
                           View Buses
                           <ArrowRight className="w-4 h-4 ml-2" />
                         </Link>

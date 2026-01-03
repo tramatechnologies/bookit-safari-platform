@@ -4,6 +4,13 @@ import type { Database } from '@/integrations/supabase/types';
 type Booking = Database['public']['Tables']['bookings']['Row'];
 type BookingInsert = Database['public']['Tables']['bookings']['Insert'];
 
+/**
+ * Represents a booking with associated schedule details
+ * @interface BookingWithSchedule
+ * @extends Booking
+ * @property {Object} schedule - Schedule information including route, bus, and pricing
+ * @property {Array} payments - Payment history for this booking
+ */
 export interface BookingWithSchedule extends Booking {
   schedule: {
     id: string;
@@ -38,8 +45,19 @@ export interface BookingWithSchedule extends Booking {
   }>;
 }
 
+/**
+ * Bookings API - Handles all booking-related operations
+ * Includes fetching, creating, updating, and canceling bookings
+ * @namespace bookingsApi
+ */
 export const bookingsApi = {
-  // Get user's bookings
+  /**
+   * Get user's bookings with schedule and payment details
+   * @async
+   * @param {string} userId - The user ID to fetch bookings for
+   * @returns {Promise<BookingWithSchedule[]>} Array of bookings with schedule details
+   * @throws {Error} If the database query fails
+   */
   async getUserBookings(userId: string): Promise<BookingWithSchedule[]> {
     const { data, error } = await supabase
       .from('bookings')

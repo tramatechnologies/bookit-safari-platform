@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Save, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, Save, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,12 +9,19 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { profileSchema } from '@/lib/validations/profile';
+import { formatProfileError } from '@/lib/utils/error-messages';
 
 const Profile = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [profile, setProfile] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+  });
+  const [originalProfile, setOriginalProfile] = useState({
     full_name: '',
     email: '',
     phone: '',
@@ -23,13 +30,15 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
-      setProfile({
+      const initialProfile = {
         full_name: user.user_metadata?.full_name || '',
         email: user.email || '',
         phone: user.user_metadata?.phone || '',
-      });
+      };
+      setProfile(initialProfile);
+      setOriginalProfile(initialProfile);
 
-      // Fetch profile from database
+      // Fetch profile from database for latest data
       const fetchProfile = async () => {
         const { data, error } = await supabase
           .from('profiles')
@@ -38,17 +47,27 @@ const Profile = () => {
           .single();
 
         if (!error && data) {
-          setProfile({
+          const fetchedProfile = {
             full_name: data.full_name || '',
             email: user.email || '',
             phone: data.phone || '',
-          });
+          };
+          setProfile(fetchedProfile);
+          setOriginalProfile(fetchedProfile);
         }
       };
 
       fetchProfile();
     }
   }, [user]);
+
+  // Clear success message after 5 seconds
+  useEffect(() => {
+    if (saveSuccess) {
+      const timer = setTimeout(() => setSaveSuccess(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [saveSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,6 +122,7 @@ const Profile = () => {
 
       if (updateError) throw updateError;
 
+      setSaveSuccess(true);
       toast({
         title: 'Profile updated',
         description: 'Your profile has been updated successfully.',
@@ -123,11 +143,19 @@ const Profile = () => {
     <ProtectedRoute>
       <DashboardLayout>
         <div className="p-6 max-w-4xl">
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-2">My Profile</h1>
-            <p className="text-muted-foreground">
-              Manage your account information and preferences
-            </p>
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h1 className="text-2xl font-bold mb-2">My Profile</h1>
+              <p className="text-muted-foreground">
+                Manage your account information and preferences
+              </p>
+            </div>
+            {saveSuccess && (
+              <div className="flex items-center gap-2 bg-teal/10 border border-teal/30 rounded-lg px-4 py-2">
+                <CheckCircle className="w-5 h-5 text-teal" />
+                <span className="text-sm font-medium text-teal">Changes saved</span>
+              </div>
+            )}
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-8">
@@ -183,13 +211,19 @@ const Profile = () => {
                     type="tel"
                     value={profile.phone}
                     onChange={(e) => {
-                      setProfile({ ...profile, phone: e.target.value });
+                      let value = e.target.value;
+                      // Allow only digits, +, and spaces
+                      value = value.replace(/[^\d+\s]/g, '');
+                      setProfile({ ...profile, phone: value });
                       if (errors.phone) setErrors({ ...errors, phone: '' });
                     }}
                     className={`pl-10 ${errors.phone ? 'border-destructive' : ''}`}
-                    placeholder="Enter Your Phone Number"
+                    placeholder="Enter your phone number"
                     disabled={loading}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Examples: +255712345678, 255712345678, or 0712345678
+                  </p>
                   {errors.phone && (
                     <p className="text-xs text-destructive mt-1">{errors.phone}</p>
                   )}

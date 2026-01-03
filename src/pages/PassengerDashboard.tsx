@@ -74,9 +74,12 @@ const PassengerDashboard = () => {
       }
 
       const totalBookings = bookings?.length || 0;
-      const confirmedBookings = bookings?.filter(b => b.status === 'confirmed').length || 0;
+      // Only count bookings with completed payments as confirmed
+      const confirmedBookings = bookings?.filter(b => b.status === 'confirmed' && (b as any).payments?.some((p: any) => p.status === 'completed')).length || 0;
+      // Sum only payments that have been completed
       const totalSpent = bookings?.reduce((sum, b) => {
-        const amount = Number((b as any).total_price_tzs || 0);
+        const hasCompletedPayment = (b as any).payments?.some((p: any) => p.status === 'completed');
+        const amount = hasCompletedPayment ? Number((b as any).total_price_tzs || 0) : 0;
         return sum + amount;
       }, 0) || 0;
 
@@ -205,7 +208,7 @@ const PassengerDashboard = () => {
                     <Calendar className="w-6 h-6 text-green" />
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-1">Confirmed</p>
+                <p className="text-sm text-muted-foreground mb-1">Paid & Confirmed</p>
                 <p className="text-3xl font-bold">{stats?.confirmedBookings || 0}</p>
               </div>
 
@@ -239,7 +242,9 @@ const PassengerDashboard = () => {
                 </div>
               ) : recentBookings && recentBookings.length > 0 ? (
                 <div className="divide-y divide-border">
-                  {recentBookings.map((booking: any) => {
+                  {recentBookings
+                    .filter((b: any) => b.status === 'confirmed' && b.payments?.some((p: any) => p.status === 'completed'))
+                    .map((booking: any) => {
                     const schedule = booking.schedule;
                     const route = schedule?.route;
                     const bus = schedule?.bus;

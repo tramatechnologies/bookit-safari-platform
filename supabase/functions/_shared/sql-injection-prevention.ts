@@ -103,6 +103,7 @@ export function sanitizeInput(input: string | null | undefined): string {
 
 /**
  * Validate and sanitize UUID input
+ * Note: UUIDs are constrained to hex (0-9a-f) and hyphens, so SQL injection check is not needed
  */
 export function validateUUID(input: string | null | undefined): string | null {
   if (!input || typeof input !== 'string') {
@@ -116,11 +117,7 @@ export function validateUUID(input: string | null | undefined): string | null {
     return null;
   }
 
-  // Check for SQL injection attempts
-  if (containsSQLInjection(input)) {
-    return null;
-  }
-
+  // UUID format is restrictive enough (only hex and hyphens), no need for SQL injection check
   return input.toLowerCase();
 }
 
@@ -227,12 +224,7 @@ export function validatePhone(input: string | null | undefined): string | null {
     return null;
   }
 
-  // Check for SQL injection
-  if (containsSQLInjection(input)) {
-    return null;
-  }
-
-  // Remove non-digit characters
+  // Remove non-digit characters FIRST
   const digits = input.replace(/\D/g, '');
 
   // Check length (typical phone numbers are 10-15 digits)
@@ -240,6 +232,7 @@ export function validatePhone(input: string | null | undefined): string | null {
     return null;
   }
 
+  // Digits only - no SQL injection possible
   return digits;
 }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { signInSchema, signUpSchema } from '@/lib/validations/auth';
 import { formatAuthError } from '@/lib/utils/error-messages';
+import { rateLimitedSignIn, rateLimitedSignUp, getRemainingAttempts } from '@/lib/api/auth-rate-limit';
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -91,41 +92,54 @@ const Auth = () => {
           return;
         }
 
-        const { data, error: signUpError } = await signUp(formData.email, formData.password, formData.fullName);
-        
-        if (signUpError) {
-          // Check if user already exists
-          const errorMsg = signUpError.message?.toLowerCase() || '';
-          if (errorMsg.includes('already') || 
-              errorMsg.includes('exists') ||
-              errorMsg.includes('registered') ||
-              signUpError.status === 422) {
+        try {
+          // Use rate-limited sign up
+          const { data, error: signUpError } = await rateLimitedSignUp(formData.email, formData.password, formData.fullName);
+          
+          if (signUpError) {
+            // Check if user already exists
+            const errorMsg = signUpError.message?.toLowerCase() || '';
+            if (errorMsg.includes('already') || 
+                errorMsg.includes('exists') ||
+                errorMsg.includes('registered') ||
+                signUpError.status === 422) {
+              throw {
+                ...signUpError,
+                message: 'An account with this email already exists. Please sign in instead.',
+                isExistingUser: true,
+              };
+            }
+            throw signUpError;
+          }
+
+          // Mark that we just signed up to prevent useEffect from interfering
+          setJustSignedUp(true);
+          
+          // Set loading to false before navigation to prevent useEffect interference
+          setLoading(false);
+
+          toast({
+            title: 'Account created successfully!',
+            description: 'Please check your email to verify your account. You can continue browsing, but some features require email verification.',
+            duration: 5000,
+          });
+          
+          // Reset the flag
+          setTimeout(() => setJustSignedUp(false), 1000);
+          
+          // Stay on the auth page or redirect to home
+          // User can continue browsing but will see verification message when needed
+        } catch (error: any) {
+          // Check for rate limit exceeded
+          if (error.code === 'RATE_LIMIT_EXCEEDED') {
+            const remainingMinutes = Math.ceil((error.retryAfterSeconds || 0) / 60);
             throw {
-              ...signUpError,
-              message: 'An account with this email already exists. Please sign in instead.',
-              isExistingUser: true,
+              ...error,
+              message: `Too many sign-up attempts. Please try again in ${remainingMinutes} hour${remainingMinutes > 1 ? 's' : ''}.`,
             };
           }
-          throw signUpError;
+          throw error;
         }
-
-        // Mark that we just signed up to prevent useEffect from interfering
-        setJustSignedUp(true);
-        
-        // Set loading to false before navigation to prevent useEffect interference
-        setLoading(false);
-
-        toast({
-          title: 'Account created successfully!',
-          description: 'Please check your email to verify your account. You can continue browsing, but some features require email verification.',
-          duration: 5000,
-        });
-        
-        // Reset the flag
-        setTimeout(() => setJustSignedUp(false), 1000);
-        
-        // Stay on the auth page or redirect to home
-        // User can continue browsing but will see verification message when needed
       } else {
         // Validate with Zod
         const result = signInSchema.safeParse({
@@ -150,47 +164,60 @@ const Auth = () => {
           return;
         }
 
-        const { data, error: signInError } = await signIn(formData.email, formData.password);
-        
-        if (signInError) {
-          // Provide user-friendly error messages
-          const errorMsg = signInError.message?.toLowerCase() || '';
-          const errorCode = signInError.status || signInError.code;
+        try {
+          // Use rate-limited sign in
+          const { data, error: signInError } = await rateLimitedSignIn(formData.email, formData.password);
           
-          // Check for deleted account
-          if (errorMsg.includes('user not found') ||
-              errorMsg.includes('user does not exist') ||
-              errorMsg.includes('account not found') ||
-              errorCode === 404) {
+          if (signInError) {
+            // Provide user-friendly error messages
+            const errorMsg = signInError.message?.toLowerCase() || '';
+            const errorCode = signInError.status || signInError.code;
+            
+            // Check for deleted account
+            if (errorMsg.includes('user not found') ||
+                errorMsg.includes('user does not exist') ||
+                errorMsg.includes('account not found') ||
+                errorCode === 404) {
+              throw {
+                ...signInError,
+                message: 'No account found with this email address. The account may have been deleted. Please sign up for a new account.',
+                isDeletedAccount: true,
+              };
+            } else if (errorMsg.includes('invalid') || errorMsg.includes('credentials')) {
+              throw {
+                ...signInError,
+                message: 'Invalid email or password. Please check your credentials and try again.',
+              };
+            }
+            throw signInError;
+          }
+
+          // Check if email is verified
+          if (data?.user?.email_confirmed_at) {
+            toast({
+              title: 'Welcome back!',
+              description: 'You have been signed in successfully.',
+            });
+            const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
+            navigate(from, { replace: true });
+          } else {
+            toast({
+              title: 'Email verification required',
+              description: 'Please verify your email address to continue.',
+              variant: 'destructive',
+            });
+            navigate('/auth/verify-waiting', { replace: true });
+          }
+        } catch (error: any) {
+          // Check for rate limit exceeded
+          if (error.code === 'RATE_LIMIT_EXCEEDED') {
+            const remainingMinutes = Math.ceil((error.retryAfterSeconds || 0) / 60);
             throw {
-              ...signInError,
-              message: 'No account found with this email address. The account may have been deleted. Please sign up for a new account.',
-              isDeletedAccount: true,
-            };
-          } else if (errorMsg.includes('invalid') || errorMsg.includes('credentials')) {
-            throw {
-              ...signInError,
-              message: 'Invalid email or password. Please check your credentials and try again.',
+              ...error,
+              message: `Too many sign-in attempts. Please try again in ${remainingMinutes} minute${remainingMinutes > 1 ? 's' : ''}.`,
             };
           }
-          throw signInError;
-        }
-
-        // Check if email is verified
-        if (data?.user?.email_confirmed_at) {
-          toast({
-            title: 'Welcome back!',
-            description: 'You have been signed in successfully.',
-          });
-          const from = (location.state as { from?: Location })?.from?.pathname || '/dashboard';
-          navigate(from, { replace: true });
-        } else {
-          toast({
-            title: 'Email verification required',
-            description: 'Please verify your email address to continue.',
-            variant: 'destructive',
-          });
-          navigate('/auth/verify-waiting', { replace: true });
+          throw error;
         }
       }
     } catch (error: any) {

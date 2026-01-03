@@ -34,6 +34,9 @@ const Payment = () => {
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'failed'>('pending');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [shouldPoll, setShouldPoll] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.user_metadata?.phone) {
@@ -41,66 +44,120 @@ const Payment = () => {
     }
   }, [user]);
 
-  // Poll for payment status when shouldPoll is true
+  // Poll for payment status with exponential backoff
   useEffect(() => {
     if (!shouldPoll || !booking || paymentStatus === 'success' || paymentStatus === 'failed') {
       return;
     }
 
-    const pollInterval = setInterval(async () => {
+    let pollCount = 0;
+    const maxPollCount = 100; // ~5 minutes with exponential backoff
+    
+    const pollPaymentStatus = async () => {
       try {
-        // Check booking status to see if payment was completed
-        const { data: updatedBooking } = await supabase
-          .from('bookings')
-          .select('status, payments(status)')
-          .eq('id', booking.id)
-          .single();
+        pollCount++;
+        
+        // Check payment status directly (most reliable indicator)
+        const { data: payments, error: paymentError } = await supabase
+          .from('payments')
+          .select('id, status, payment_method')
+          .eq('booking_id', booking.id)
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-        if (updatedBooking?.status === 'confirmed') {
-          setShouldPoll(false);
-          setPaymentStatus('success');
-          toast({
-            title: 'Payment successful!',
-            description: 'Your booking has been confirmed.',
-          });
+        if (paymentError) {
+          if (import.meta.env.DEV) {
+            console.error('Payment status check error:', paymentError);
+          }
+          return; // Retry on next poll
+        }
 
-          // Redirect to confirmation page after 2 seconds
-          setTimeout(() => {
-            navigate(`/booking/${booking.id}/confirmation`);
-          }, 2000);
-        } else if (updatedBooking?.payments?.[0]?.status === 'failed') {
+        const latestPayment = payments?.[0];
+
+        // Check if payment was completed
+        if (latestPayment?.status === 'completed') {
+          // Payment successful - also check booking is confirmed
+          const { data: updatedBooking } = await supabase
+            .from('bookings')
+            .select('status')
+            .eq('id', booking.id)
+            .single();
+
+          if (updatedBooking?.status === 'confirmed') {
+            setShouldPoll(false);
+            setPaymentStatus('success');
+            setLastError(null);
+            toast({
+              title: 'Payment successful!',
+              description: 'Your booking has been confirmed.',
+            });
+
+            // Redirect after 2 seconds
+            setTimeout(() => {
+              navigate(`/booking/${booking.id}/confirmation`);
+            }, 2000);
+            return;
+          }
+        }
+
+        // Check if payment was marked as failed
+        if (latestPayment?.status === 'failed' || latestPayment?.status === 'cancelled') {
           setShouldPoll(false);
           setPaymentStatus('failed');
+          setLastError('Payment was not completed. Please try again.');
           toast({
             title: 'Payment failed',
             description: 'The payment was not completed. Please try again.',
             variant: 'destructive',
           });
           setProcessing(false);
+          return;
+        }
+
+        // Log polling status
+        if (import.meta.env.DEV) {
+          console.log(`[Poll ${pollCount}] Payment status: ${latestPayment?.status || 'pending'}`);
+        }
+
+        // Continue polling if still processing
+        if (pollCount >= maxPollCount) {
+          // Timeout after ~5 minutes
+          setShouldPoll(false);
+          setPaymentStatus('failed');
+          setLastError('Payment confirmation timeout. Please check your phone or try again.');
+          toast({
+            title: 'Payment pending',
+            description: 'Your payment is taking longer than expected. You will receive a confirmation email once completed.',
+          });
+          setProcessing(false);
         }
       } catch (error: any) {
         if (import.meta.env.DEV) {
-          console.error('Payment status check error:', error);
+          console.error('Payment polling error:', error);
         }
       }
-    }, 3000); // Poll every 3 seconds
+    };
 
-    // Stop polling after 5 minutes
-    const timeoutId = setTimeout(() => {
-      setShouldPoll(false);
-      if (paymentStatus === 'processing') {
-        toast({
-          title: 'Payment pending',
-          description: 'Your payment is still being processed. You will receive a confirmation email once completed.',
-        });
-        setProcessing(false);
-      }
-    }, 5 * 60 * 1000);
+    // Exponential backoff: start at 2s, max 10s
+    const getInterval = (count: number) => {
+      const baseInterval = 2000;
+      const maxInterval = 10000;
+      const interval = baseInterval * Math.pow(1.5, Math.floor(count / 10));
+      return Math.min(interval, maxInterval);
+    };
 
-    // Cleanup function
+    // Initial poll immediately
+    pollPaymentStatus();
+
+    // Set up polling with exponential backoff
+    const pollInterval = setInterval(() => {
+      const interval = getInterval(pollCount);
+      setTimeout(pollPaymentStatus, interval);
+    }, getInterval(pollCount));
+
+    // Cleanup
     return () => {
       clearInterval(pollInterval);
-      clearTimeout(timeoutId);
     };
   }, [shouldPoll, booking, paymentStatus, navigate, toast]);
 
@@ -138,6 +195,7 @@ const Payment = () => {
 
     try {
       // Initiate payment via secure edge function (prevents amount manipulation)
+      // The Supabase SDK automatically includes the Authorization header for authenticated users
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('initiate-payment', {
         body: {
           booking_id: booking.id,
@@ -146,7 +204,17 @@ const Payment = () => {
         },
       });
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        // Extract error message from various possible response structures
+        let errorMessage = paymentError.message || 'Payment initiation failed';
+        
+        // If error is a JSON response with nested error info
+        if (paymentError?.context?.error) {
+          errorMessage = paymentError.context.error;
+        }
+        
+        throw new Error(errorMessage);
+      }
 
       if (!paymentData?.success || !paymentData?.payment_id) {
         throw new Error(paymentData?.error || 'Failed to initiate payment');
@@ -154,6 +222,9 @@ const Payment = () => {
 
       // Payment initiated successfully
       setPaymentStatus('processing');
+      setPaymentId(paymentData.payment_id);
+      setRetryCount(0);
+      setLastError(null);
       
       // Show success message with instructions
       toast({
@@ -166,10 +237,33 @@ const Payment = () => {
     } catch (error: any) {
       setPaymentStatus('failed');
       setProcessing(false);
-      const formattedError = formatPaymentError(error);
+      
+      // Debug log for development
+      if (import.meta.env.DEV) {
+        console.error('[Payment] Full error:', error);
+      }
+      
+      // Extract the actual error message from edge function response
+      let errorMessage = error?.message || 'Payment failed. Please try again.';
+      
+      // Format with our error formatter
+      const formattedError = formatPaymentError({ message: errorMessage });
+      let displayMessage = formattedError.description;
+      
+      // Add recovery suggestions
+      if (errorMessage?.includes('Network') || error?.status === 0) {
+        displayMessage += '\n\nTip: Check your internet connection and try again.';
+      } else if (error?.status === 400) {
+        displayMessage += '\n\nTip: Please check your phone number format.';
+      } else if (error?.status === 429) {
+        displayMessage += '\n\nTip: Too many attempts. Please wait a moment before trying again.';
+      }
+      
+      setLastError(displayMessage);
+      
       toast({
         title: formattedError.title,
-        description: formattedError.description,
+        description: displayMessage,
         variant: 'destructive',
       });
     }
@@ -279,11 +373,18 @@ const Payment = () => {
 
                   <form onSubmit={handlePayment} className="space-y-6">
                     <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                      {/* M-Pesa */}
+                      <div className={`flex items-center space-x-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === 'mpesa' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                      }`}>
                         <RadioGroupItem value="mpesa" id="mpesa" />
                         <Label htmlFor="mpesa" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <Smartphone className="w-5 h-5" />
+                          <div className="flex items-center gap-4">
+                            <img 
+                              src="/images/M-Pesa.png" 
+                              alt="M-Pesa" 
+                              className="w-12 h-12 object-contain"
+                            />
                             <div>
                               <p className="font-medium">M-Pesa</p>
                               <p className="text-sm text-muted-foreground">Mobile Money</p>
@@ -292,11 +393,18 @@ const Payment = () => {
                         </Label>
                       </div>
 
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                      {/* Tigo Pesa */}
+                      <div className={`flex items-center space-x-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === 'tigopesa' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                      }`}>
                         <RadioGroupItem value="tigopesa" id="tigopesa" />
                         <Label htmlFor="tigopesa" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <Smartphone className="w-5 h-5" />
+                          <div className="flex items-center gap-4">
+                            <img 
+                              src="/images/Mixx By Yas.jpg" 
+                              alt="Tigo Pesa" 
+                              className="w-12 h-12 object-contain"
+                            />
                             <div>
                               <p className="font-medium">Tigo Pesa</p>
                               <p className="text-sm text-muted-foreground">Mobile Money</p>
@@ -305,11 +413,18 @@ const Payment = () => {
                         </Label>
                       </div>
 
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                      {/* Airtel Money */}
+                      <div className={`flex items-center space-x-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === 'airtel' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                      }`}>
                         <RadioGroupItem value="airtel" id="airtel" />
                         <Label htmlFor="airtel" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <Smartphone className="w-5 h-5" />
+                          <div className="flex items-center gap-4">
+                            <img 
+                              src="/images/AIrtel Money.jpg" 
+                              alt="Airtel Money" 
+                              className="w-12 h-12 object-contain"
+                            />
                             <div>
                               <p className="font-medium">Airtel Money</p>
                               <p className="text-sm text-muted-foreground">Mobile Money</p>
@@ -318,45 +433,71 @@ const Payment = () => {
                         </Label>
                       </div>
 
-                      <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
-                        <RadioGroupItem value="clickpesa" id="clickpesa" />
-                        <Label htmlFor="clickpesa" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-3">
-                            <CreditCard className="w-5 h-5" />
+                      {/* HaloPesa */}
+                      <div className={`flex items-center space-x-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        paymentMethod === 'halopesa' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+                      }`}>
+                        <RadioGroupItem value="halopesa" id="halopesa" />
+                        <Label htmlFor="halopesa" className="flex-1 cursor-pointer">
+                          <div className="flex items-center gap-4">
+                            <img 
+                              src="/images/Halopesa.png" 
+                              alt="HaloPesa" 
+                              className="w-12 h-12 object-contain"
+                            />
                             <div>
-                              <p className="font-medium">ClickPesa</p>
-                              <p className="text-sm text-muted-foreground">Card Payment</p>
+                              <p className="font-medium">HaloPesa</p>
+                              <p className="text-sm text-muted-foreground">Mobile Money</p>
                             </div>
                           </div>
                         </Label>
                       </div>
                     </RadioGroup>
 
-                    {(paymentMethod === 'mpesa' || paymentMethod === 'tigopesa' || paymentMethod === 'airtel') && (
+                    {(paymentMethod === 'mpesa' || paymentMethod === 'tigopesa' || paymentMethod === 'airtel' || paymentMethod === 'halopesa') && (
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
                         <Input
                           id="phone"
                           type="tel"
                           value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                          placeholder="Enter Your Phone Number"
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            // Allow only digits, +, and spaces
+                            value = value.replace(/[^\d+\s]/g, '');
+                            setPhoneNumber(value);
+                          }}
+                          placeholder="Enter your phone number"
                           required
                         />
                         <p className="text-xs text-muted-foreground">
-                          You will receive a payment prompt on this number
+                          Enter your phone number. Examples: +255712345678, 255712345678, or 0712345678. You will receive a payment prompt on this number
                         </p>
                       </div>
                     )}
 
-                    {paymentStatus === 'failed' && (
-                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex items-start gap-3">
-                        <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-destructive">Payment failed</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Please try again or use a different payment method.
-                          </p>
+                    {paymentStatus === 'failed' && lastError && (
+                      <div className="bg-destructive/10 border-2 border-destructive/30 rounded-lg p-4 flex items-start gap-3">
+                        <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div>
+                            {lastError.split('\n\n').map((section, idx) => (
+                              <div key={idx} className={idx > 0 ? 'mt-3 pt-3 border-t border-destructive/20' : ''}>
+                                {section.split('\n').map((line, lineIdx) => (
+                                  <p 
+                                    key={lineIdx}
+                                    className={`${
+                                      lineIdx === 0 
+                                        ? 'text-sm font-semibold text-destructive' 
+                                        : 'text-xs text-muted-foreground mt-1'
+                                    }`}
+                                  >
+                                    {line}
+                                  </p>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -372,6 +513,11 @@ const Payment = () => {
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           Processing Payment...
+                        </>
+                      ) : paymentStatus === 'failed' ? (
+                        <>
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Retry Payment
                         </>
                       ) : (
                         <>

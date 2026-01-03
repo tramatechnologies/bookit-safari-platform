@@ -3,6 +3,7 @@ import { Menu, X, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import OptimizedImage from '@/components/Image';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,15 +28,13 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <img 
+            <OptimizedImage 
               src="/images/logo.png" 
               alt="BookitSafari Logo" 
               className="h-10 w-auto object-contain group-hover:opacity-90 transition-opacity"
-              loading="eager"
-              onError={(e) => {
-                // Fallback if image fails to load
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
+              width={40}
+              height={40}
+              priority={true}
             />
             <span className="font-display text-xl font-bold text-foreground">
               Bookit<span className="text-amber">Safari</span>

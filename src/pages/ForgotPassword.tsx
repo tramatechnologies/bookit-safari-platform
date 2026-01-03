@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { z } from 'zod';
 import { formatAuthError } from '@/lib/utils/error-messages';
+import { rateLimitedResetPasswordRequest } from '@/lib/api/auth-rate-limit';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -39,19 +40,34 @@ const ForgotPassword = () => {
     }
 
     try {
-      await resetPassword(email);
+      // Use rate-limited password reset request
+      await rateLimitedResetPasswordRequest(email);
       setEmailSent(true);
       toast({
         title: 'Password reset email sent!',
         description: 'Please check your email for instructions to reset your password.',
       });
     } catch (error: any) {
-      const formattedError = formatAuthError(error);
-      toast({
-        title: formattedError.title,
-        description: formattedError.description,
-        variant: 'destructive',
-      });
+      // Check for rate limit exceeded
+      if (error.code === 'RATE_LIMIT_EXCEEDED') {
+        const remainingMinutes = Math.ceil((error.retryAfterSeconds || 0) / 60);
+        const formattedError = {
+          title: 'Too Many Requests',
+          description: `You've requested too many password resets. Please try again in ${remainingMinutes} hour${remainingMinutes > 1 ? 's' : ''}.`,
+        };
+        toast({
+          title: formattedError.title,
+          description: formattedError.description,
+          variant: 'destructive',
+        });
+      } else {
+        const formattedError = formatAuthError(error);
+        toast({
+          title: formattedError.title,
+          description: formattedError.description,
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }

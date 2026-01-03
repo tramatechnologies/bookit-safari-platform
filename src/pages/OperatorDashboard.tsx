@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Bus, Calendar, TrendingUp, Users, Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Bus, Calendar, TrendingUp, Users, Plus, Loader2, AlertCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { RealtimeSeatAvailability } from '@/components/RealtimeSeatAvailability';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -122,6 +123,31 @@ const OperatorDashboard = () => {
         buses: busesCount.data || 0,
         schedules: scheduleIds.length,
       };
+    },
+    enabled: !!operatorId,
+  });
+
+  // Fetch operator's schedules for real-time seat availability
+  const { data: operatorSchedules } = useQuery({
+    queryKey: ['operator-schedules-dashboard', operatorId],
+    queryFn: async () => {
+      if (!operatorId) return [];
+
+      const { data: routesData } = await supabase.rpc('get_operator_routes', {
+        p_operator_id: operatorId,
+      });
+
+      if (!routesData || routesData.length === 0) return [];
+
+      const routeIds = routesData.map((r: any) => r.id);
+
+      const { data: schedulesData } = await supabase
+        .from('schedules')
+        .select('id')
+        .in('route_id', routeIds)
+        .eq('is_active', true);
+
+      return schedulesData?.map((s: any) => s.id) || [];
     },
     enabled: !!operatorId,
   });
@@ -246,8 +272,19 @@ const OperatorDashboard = () => {
             </div>
           </div>
 
+          {/* Real-time Seat Availability */}
+          {operatorSchedules && operatorSchedules.length > 0 && (
+            <div className="bg-card rounded-2xl border border-border p-6 mb-8">
+              <div className="flex items-center gap-3 mb-6">
+                <Zap className="w-6 h-6 text-teal" />
+                <h2 className="text-2xl font-bold">Real-Time Seat Availability</h2>
+              </div>
+              <RealtimeSeatAvailability scheduleIds={operatorSchedules} />
+            </div>
+          )}
+
           {/* Quick Actions */}
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Link
               to="/operator/buses"
               className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
@@ -264,6 +301,15 @@ const OperatorDashboard = () => {
               <Users className="w-8 h-8 mb-3 text-amber" />
               <h3 className="font-semibold mb-1">Manage Routes</h3>
               <p className="text-sm text-muted-foreground">Create and edit routes</p>
+            </Link>
+
+            <Link
+              to="/operator/schedules"
+              className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
+            >
+              <Calendar className="w-8 h-8 mb-3 text-green-500" />
+              <h3 className="font-semibold mb-1">Manage Schedules</h3>
+              <p className="text-sm text-muted-foreground">Create trips & manage schedules</p>
             </Link>
 
             <Link

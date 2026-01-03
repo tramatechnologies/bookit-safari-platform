@@ -14,62 +14,55 @@ interface ClickPesaAuthResponse {
   expires_in: number;
 }
 
+interface ActiveMethod {
+  name: string;
+  status: 'AVAILABLE' | 'UNAVAILABLE';
+  fee?: number;
+  message?: string;
+}
+
+interface SenderDetails {
+  accountName: string;
+  accountNumber: string;
+  accountProvider: string;
+}
+
 interface PreviewPushRequest {
-  mobile_number: string;
+  phoneNumber: string;
   amount: number;
   currency: string;
-  order_reference: string;
-  payment_method: 'mpesa' | 'tigopesa' | 'airtel';
-  description?: string;
+  orderReference: string;
+  fetchSenderDetails?: boolean;
 }
 
 interface PreviewPushResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    mobile_number: string;
-    amount: number;
-    currency: string;
-    payment_method: string;
-    available: boolean;
-  };
+  activeMethods: ActiveMethod[];
+  sender?: SenderDetails;
 }
 
 interface InitiatePushRequest {
-  mobile_number: string;
+  phoneNumber: string;
   amount: number;
   currency: string;
-  order_reference: string;
-  payment_method: 'mpesa' | 'tigopesa' | 'airtel';
-  description?: string;
-  callback_url?: string;
+  orderReference: string;
+  fetchSenderDetails?: boolean;
 }
 
 interface InitiatePushResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    order_reference: string;
-    transaction_id?: string;
-    status: string;
-    mobile_number: string;
-    amount: number;
-    currency: string;
-  };
+  orderReference: string;
+  transactionId?: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  amount: number;
+  currency: string;
 }
 
 interface PaymentStatusResponse {
-  success: boolean;
-  message: string;
-  data?: {
-    order_reference: string;
-    transaction_id?: string;
-    status: 'pending' | 'completed' | 'failed' | 'cancelled';
-    mobile_number: string;
-    amount: number;
-    currency: string;
-    paid_at?: string;
-  };
+  orderReference: string;
+  transactionId?: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED';
+  amount: number;
+  currency: string;
+  paidAt?: string;
 }
 
 /**
@@ -108,6 +101,7 @@ async function getAuthToken(): Promise<string> {
 /**
  * Step 1: Preview USSD-PUSH Request
  * Validates payment details and verifies payment method availability
+ * Endpoint: POST /third-parties/payments/preview-ussd-push-request
  */
 export async function previewPushRequest(
   request: PreviewPushRequest
@@ -115,33 +109,32 @@ export async function previewPushRequest(
   try {
     const token = await getAuthToken();
 
-    const response = await fetch(`${CLICKPESA_API_URL}/api/v1/payments/preview`, {
+    const response = await fetch(`${CLICKPESA_API_URL}/third-parties/payments/preview-ussd-push-request`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        mobile_number: request.mobile_number,
+        phoneNumber: request.phoneNumber,
         amount: request.amount,
         currency: request.currency || 'TZS',
-        order_reference: request.order_reference,
-        payment_method: request.payment_method,
-        description: request.description,
+        orderReference: request.orderReference,
+        fetchSenderDetails: request.fetchSenderDetails || false,
       }),
     });
 
-    const data: PreviewPushResponse = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.message || `Preview request failed: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Preview request failed: ${response.status} - ${JSON.stringify(errorData)}`
+      );
     }
 
+    const data: PreviewPushResponse = await response.json();
     return data;
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('ClickPesa preview error:', error);
-    }
+    console.error('ClickPesa preview error:', error);
     throw error;
   }
 }
@@ -149,6 +142,7 @@ export async function previewPushRequest(
 /**
  * Step 2: Initiate USSD-PUSH Request
  * Sends the USSD-PUSH request to customer's mobile device
+ * Endpoint: POST /third-parties/payments/initiate-ussd-push-request
  */
 export async function initiatePushRequest(
   request: InitiatePushRequest
@@ -156,34 +150,32 @@ export async function initiatePushRequest(
   try {
     const token = await getAuthToken();
 
-    const response = await fetch(`${CLICKPESA_API_URL}/api/v1/payments/push`, {
+    const response = await fetch(`${CLICKPESA_API_URL}/third-parties/payments/initiate-ussd-push-request`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        mobile_number: request.mobile_number,
+        phoneNumber: request.phoneNumber,
         amount: request.amount,
         currency: request.currency || 'TZS',
-        order_reference: request.order_reference,
-        payment_method: request.payment_method,
-        description: request.description,
-        callback_url: request.callback_url,
+        orderReference: request.orderReference,
+        fetchSenderDetails: request.fetchSenderDetails || false,
       }),
     });
 
-    const data: InitiatePushResponse = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.message || `Initiate push failed: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Initiate push failed: ${response.status} - ${JSON.stringify(errorData)}`
+      );
     }
 
+    const data: InitiatePushResponse = await response.json();
     return data;
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('ClickPesa initiate error:', error);
-    }
+    console.error('ClickPesa initiate error:', error);
     throw error;
   }
 }
@@ -191,6 +183,7 @@ export async function initiatePushRequest(
 /**
  * Step 3: Check Payment Status
  * Queries for the payment status using order reference
+ * Endpoint: GET /third-parties/payments/query-transaction/{orderReference}
  */
 export async function checkPaymentStatus(
   orderReference: string
@@ -199,7 +192,7 @@ export async function checkPaymentStatus(
     const token = await getAuthToken();
 
     const response = await fetch(
-      `${CLICKPESA_API_URL}/api/v1/payments/status/${orderReference}`,
+      `${CLICKPESA_API_URL}/third-parties/payments/query-transaction/${orderReference}`,
       {
         method: 'GET',
         headers: {
@@ -208,17 +201,17 @@ export async function checkPaymentStatus(
       }
     );
 
-    const data: PaymentStatusResponse = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.message || `Status check failed: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Status check failed: ${response.status} - ${JSON.stringify(errorData)}`
+      );
     }
 
+    const data: PaymentStatusResponse = await response.json();
     return data;
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('ClickPesa status check error:', error);
-    }
+    console.error('ClickPesa status check error:', error);
     throw error;
   }
 }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, Users, ArrowRight, X, Loader2, Bus, Download } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ArrowRight, X, Loader2, Bus, Download, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import DashboardLayout from '@/components/DashboardLayout';
@@ -39,10 +39,15 @@ const MyBookings = () => {
 
     try {
       await cancelBooking.mutateAsync({ bookingId: bookingToCancel });
-      toast({
-        title: 'Booking cancelled',
-        description: 'Your booking has been cancelled successfully.',
-      });
+      
+      // Small delay to ensure UI updates
+      setTimeout(() => {
+        toast({
+          title: 'Booking cancelled',
+          description: 'Your booking has been cancelled successfully.',
+        });
+      }, 100);
+      
       setCancelDialogOpen(false);
       setBookingToCancel(null);
     } catch (error: any) {
@@ -161,7 +166,8 @@ const MyBookings = () => {
                 const schedule = booking.schedule;
                 // Use total_price_tzs (correct column name)
                 const totalAmount = Number((booking as any).total_price_tzs || 0);
-                const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
+                // Only allow cancellation for bookings with unpaid/incomplete payments (pending status)
+                const canCancel = booking.status === 'pending';
 
                 return (
                   <div
@@ -179,16 +185,18 @@ const MyBookings = () => {
                               </h3>
                               <span
                                 className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${
-                                  booking.status === 'confirmed'
+                                  booking.status === 'confirmed' && booking.payments?.[0]?.status === 'completed'
                                     ? 'bg-teal/10 text-teal'
                                     : booking.status === 'cancelled'
                                     ? 'bg-destructive/10 text-destructive'
                                     : booking.status === 'completed'
                                     ? 'bg-primary/10 text-primary'
-                                    : 'bg-muted text-muted-foreground'
+                                    : 'bg-amber/10 text-amber'
                                 }`}
                               >
-                                {booking.status}
+                                {booking.status === 'confirmed' && !booking.payments?.[0]?.status === 'completed'
+                                  ? 'pending payment'
+                                  : booking.status}
                               </span>
                             </div>
                             <p className="text-sm text-muted-foreground">
@@ -321,23 +329,18 @@ const MyBookings = () => {
                               const isPaymentCompleted = payment?.status === 'completed';
                               const hasPayment = booking.payments && booking.payments.length > 0;
                               
-                              return (
+                              return isPaymentCompleted ? (
                                 <Button
                                   variant="teal-outline"
                                   size="sm"
                                   onClick={() => handleDownloadTicket(booking)}
-                                  disabled={generatingTicketId === booking.id || !isPaymentCompleted}
-                                  title={!hasPayment ? 'Payment pending' : !isPaymentCompleted ? 'Payment not completed' : 'Download your e-ticket'}
+                                  disabled={generatingTicketId === booking.id}
+                                  title="Download your e-ticket"
                                 >
                                   {generatingTicketId === booking.id ? (
                                     <>
                                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                                       Generating...
-                                    </>
-                                  ) : !isPaymentCompleted ? (
-                                    <>
-                                      <Download className="w-4 h-4 mr-2 opacity-50" />
-                                      Payment Required
                                     </>
                                   ) : (
                                     <>
@@ -345,6 +348,18 @@ const MyBookings = () => {
                                       Download Ticket
                                     </>
                                   )}
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="teal"
+                                  size="sm"
+                                  asChild
+                                  title="Complete payment to confirm booking"
+                                >
+                                  <Link to={`/payment/${booking.id}`}>
+                                    <CreditCard className="w-4 h-4 mr-2" />
+                                    Pay Now
+                                  </Link>
                                 </Button>
                               );
                             })()}

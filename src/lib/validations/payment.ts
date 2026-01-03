@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 export const paymentSchema = z.object({
-  paymentMethod: z.enum(['mpesa', 'tigopesa', 'airtel', 'clickpesa'], {
+  paymentMethod: z.enum(['mpesa', 'tigopesa', 'airtel', 'halopesa', 'clickpesa'], {
     errorMap: () => ({ message: 'Please select a payment method' }),
   }),
   phoneNumber: z.string().regex(/^\+?[0-9]{10,15}$/, 'Please enter a valid phone number').optional(),
 }).refine((data) => {
   // Phone number required for mobile money payments
-  if (['mpesa', 'tigopesa', 'airtel'].includes(data.paymentMethod)) {
+  if (['mpesa', 'tigopesa', 'airtel', 'halopesa'].includes(data.paymentMethod)) {
     return data.phoneNumber && data.phoneNumber.length > 0;
   }
   return true;

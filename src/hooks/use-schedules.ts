@@ -1,11 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { schedulesApi, type SearchFilters } from '@/lib/api/schedules';
+import { format } from 'date-fns';
 
 export const useSearchSchedules = (filters: SearchFilters) => {
+  // If no date is provided, use tomorrow
+  const defaultDate = format(new Date(Date.now() + 24 * 60 * 60 * 1000), 'yyyy-MM-dd');
+  const filtersWithDefaults = {
+    ...filters,
+    date: filters.date || defaultDate,
+  };
+
   return useQuery({
-    queryKey: ['schedules', 'search', filters],
-    queryFn: () => schedulesApi.searchSchedules(filters),
-    enabled: !!(filters.fromRegionId && filters.toRegionId && filters.date),
+    queryKey: ['schedules', 'search', filtersWithDefaults],
+    queryFn: () => schedulesApi.searchSchedules(filtersWithDefaults),
+    // Enable query if we have a date (always true now since we set a default)
+    enabled: !!filtersWithDefaults.date,
   });
 };
 

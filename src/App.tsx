@@ -5,38 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import AuthCallback from "./pages/AuthCallback";
-import VerifyEmail from "./pages/VerifyEmail";
-import EmailVerificationWaiting from "./pages/EmailVerificationWaiting";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import SearchResults from "./pages/SearchResults";
-import Booking from "./pages/Booking";
-import Payment from "./pages/Payment";
-import BookingConfirmation from "./pages/BookingConfirmation";
-import MyBookings from "./pages/MyBookings";
-import Profile from "./pages/Profile";
-import PassengerDashboard from "./pages/PassengerDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminOperators from "./pages/AdminOperators";
-import AdminCommissions from "./pages/AdminCommissions";
-import OperatorDashboard from "./pages/OperatorDashboard";
-import OperatorBuses from "./pages/OperatorBuses";
-import OperatorRoutes from "./pages/OperatorRoutes";
-import OperatorBookings from "./pages/OperatorBookings";
-import OperatorSchedules from "./pages/OperatorSchedules";
-import RoutesPage from "./pages/Routes";
-import Operators from "./pages/Operators";
-import Help from "./pages/Help";
-import About from "./pages/About";
-import OperatorRegister from "./pages/OperatorRegister";
-import Partner from "./pages/Partner";
-import Advertise from "./pages/Advertise";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import NotFound from "./pages/NotFound";
+import { SuspenseLoader, LazyIndex, LazyAuth, LazyAuthCallback, LazyVerifyEmail, LazyEmailVerificationWaiting, LazyForgotPassword, LazyResetPassword, LazySearchResults, LazyBooking, LazyPayment, LazyBookingConfirmation, LazyMyBookings, LazyProfile, LazyPassengerDashboard, LazyAdminDashboard, LazyAdminOperators, LazyAdminCommissions, LazyOperatorDashboard, LazyOperatorBuses, LazyOperatorRoutes, LazyOperatorBookings, LazyOperatorSchedules, LazyRoutes, LazyOperators, LazyHelp, LazyAbout, LazyOperatorRegister, LazyPartner, LazyAdvertise, LazyPrivacy, LazyTerms, LazyNotFound } from "@/utils/lazy-load";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,40 +32,40 @@ const App = () => (
         >
           <ScrollToTop />
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/auth/verify" element={<VerifyEmail />} />
-          <Route path="/auth/verify-waiting" element={<EmailVerificationWaiting />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/auth/reset" element={<ResetPassword />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/booking/:scheduleId" element={<Booking />} />
-            <Route path="/booking/:bookingId/payment" element={<Payment />} />
-            <Route path="/booking/:bookingId/confirmation" element={<BookingConfirmation />} />
-            <Route path="/dashboard" element={<PassengerDashboard />} />
-            <Route path="/bookings" element={<MyBookings />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/operators" element={<AdminOperators />} />
-            <Route path="/admin/commissions" element={<AdminCommissions />} />
-            <Route path="/operator" element={<OperatorDashboard />} />
-            <Route path="/operator/buses" element={<OperatorBuses />} />
-            <Route path="/operator/routes" element={<OperatorRoutes />} />
-            <Route path="/operator/bookings" element={<OperatorBookings />} />
-            <Route path="/operator/schedules/new" element={<OperatorSchedules />} />
-            <Route path="/operator/schedules" element={<OperatorSchedules />} />
-            <Route path="/routes" element={<RoutesPage />} />
-            <Route path="/operators" element={<Operators />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/operator/register" element={<OperatorRegister />} />
-            <Route path="/partner" element={<Partner />} />
-            <Route path="/advertise" element={<Advertise />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/terms" element={<Terms />} />
+            <Route path="/" element={<SuspenseLoader><LazyIndex /></SuspenseLoader>} />
+            <Route path="/auth" element={<SuspenseLoader><LazyAuth /></SuspenseLoader>} />
+            <Route path="/auth/callback" element={<SuspenseLoader><LazyAuthCallback /></SuspenseLoader>} />
+            <Route path="/auth/verify" element={<SuspenseLoader><LazyVerifyEmail /></SuspenseLoader>} />
+            <Route path="/auth/verify-waiting" element={<SuspenseLoader><LazyEmailVerificationWaiting /></SuspenseLoader>} />
+            <Route path="/forgot-password" element={<SuspenseLoader><LazyForgotPassword /></SuspenseLoader>} />
+            <Route path="/auth/reset" element={<SuspenseLoader><LazyResetPassword /></SuspenseLoader>} />
+            <Route path="/search" element={<SuspenseLoader><LazySearchResults /></SuspenseLoader>} />
+            <Route path="/booking/:scheduleId" element={<SuspenseLoader><LazyBooking /></SuspenseLoader>} />
+            <Route path="/booking/:bookingId/payment" element={<SuspenseLoader><LazyPayment /></SuspenseLoader>} />
+            <Route path="/booking/:bookingId/confirmation" element={<SuspenseLoader><LazyBookingConfirmation /></SuspenseLoader>} />
+            <Route path="/dashboard" element={<SuspenseLoader><LazyPassengerDashboard /></SuspenseLoader>} />
+            <Route path="/bookings" element={<SuspenseLoader><LazyMyBookings /></SuspenseLoader>} />
+            <Route path="/profile" element={<SuspenseLoader><LazyProfile /></SuspenseLoader>} />
+            <Route path="/admin" element={<SuspenseLoader><LazyAdminDashboard /></SuspenseLoader>} />
+            <Route path="/admin/operators" element={<SuspenseLoader><LazyAdminOperators /></SuspenseLoader>} />
+            <Route path="/admin/commissions" element={<SuspenseLoader><LazyAdminCommissions /></SuspenseLoader>} />
+            <Route path="/operator" element={<SuspenseLoader><LazyOperatorDashboard /></SuspenseLoader>} />
+            <Route path="/operator/buses" element={<SuspenseLoader><LazyOperatorBuses /></SuspenseLoader>} />
+            <Route path="/operator/routes" element={<SuspenseLoader><LazyOperatorRoutes /></SuspenseLoader>} />
+            <Route path="/operator/bookings" element={<SuspenseLoader><LazyOperatorBookings /></SuspenseLoader>} />
+            <Route path="/operator/schedules/new" element={<SuspenseLoader><LazyOperatorSchedules /></SuspenseLoader>} />
+            <Route path="/operator/schedules" element={<SuspenseLoader><LazyOperatorSchedules /></SuspenseLoader>} />
+            <Route path="/routes" element={<SuspenseLoader><LazyRoutes /></SuspenseLoader>} />
+            <Route path="/operators" element={<SuspenseLoader><LazyOperators /></SuspenseLoader>} />
+            <Route path="/help" element={<SuspenseLoader><LazyHelp /></SuspenseLoader>} />
+            <Route path="/about" element={<SuspenseLoader><LazyAbout /></SuspenseLoader>} />
+            <Route path="/operator/register" element={<SuspenseLoader><LazyOperatorRegister /></SuspenseLoader>} />
+            <Route path="/partner" element={<SuspenseLoader><LazyPartner /></SuspenseLoader>} />
+            <Route path="/advertise" element={<SuspenseLoader><LazyAdvertise /></SuspenseLoader>} />
+            <Route path="/privacy" element={<SuspenseLoader><LazyPrivacy /></SuspenseLoader>} />
+            <Route path="/terms" element={<SuspenseLoader><LazyTerms /></SuspenseLoader>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<SuspenseLoader><LazyNotFound /></SuspenseLoader>} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

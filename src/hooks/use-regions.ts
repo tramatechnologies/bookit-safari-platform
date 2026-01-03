@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { regionsApi } from '@/lib/api/regions';
+import { cachedRegionsApi } from '@/lib/api/cached-regions';
 
 export const useRegions = () => {
   return useQuery({
     queryKey: ['regions'],
-    queryFn: regionsApi.getAllRegions,
+    queryFn: cachedRegionsApi.getAllRegions,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 };
@@ -12,7 +12,7 @@ export const useRegions = () => {
 export const usePopularRegions = () => {
   return useQuery({
     queryKey: ['regions', 'popular'],
-    queryFn: regionsApi.getPopularRegions,
+    queryFn: cachedRegionsApi.getPopularRegions,
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 };
@@ -20,7 +20,7 @@ export const usePopularRegions = () => {
 export const useRegion = (regionId: string) => {
   return useQuery({
     queryKey: ['region', regionId],
-    queryFn: () => regionsApi.getRegionById(regionId),
+    queryFn: () => cachedRegionsApi.getRegionById(regionId),
     enabled: !!regionId,
     staleTime: 1000 * 60 * 60, // 1 hour
   });

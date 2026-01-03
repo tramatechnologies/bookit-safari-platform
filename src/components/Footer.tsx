@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react';
+import OptimizedImage from '@/components/Image';
 
 const Footer = () => {
   return (
@@ -9,10 +10,13 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center gap-2 group">
-              <img 
+              <OptimizedImage 
                 src="/images/logo.png" 
                 alt="BookitSafari Logo" 
                 className="h-10 w-auto object-contain group-hover:opacity-90 transition-opacity"
+                width={40}
+                height={40}
+                priority={true}
               />
               <span className="font-display text-xl font-bold">
                 Bookit<span className="text-amber">Safari</span>

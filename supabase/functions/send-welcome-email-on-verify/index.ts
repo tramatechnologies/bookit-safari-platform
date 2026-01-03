@@ -91,7 +91,9 @@ Deno.serve(async (req: Request) => {
     });
 
     if (emailResponse.error) {
-      console.error('Error sending welcome email:', emailResponse.error);
+      if (typeof Deno !== 'undefined' && Deno.env.get('ENVIRONMENT') === 'development') {
+        console.error('Error sending welcome email:', emailResponse.error);
+      }
       return new Response(
         JSON.stringify({ 
           success: false, 
@@ -103,10 +105,12 @@ Deno.serve(async (req: Request) => {
     }
 
 
-    console.log('Welcome email sent successfully:', {
-      user_id: user.id,
-      email: user.email,
-    });
+    if (typeof Deno !== 'undefined' && Deno.env.get('ENVIRONMENT') === 'development') {
+      console.log('Welcome email sent successfully:', {
+        user_id: user.id,
+        email: user.email,
+      });
+    }
 
     return new Response(
       JSON.stringify({ success: true, email_sent: true }),

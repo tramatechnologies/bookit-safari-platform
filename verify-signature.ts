@@ -50,7 +50,9 @@ export async function verifyClickPesaSignature(
     
     return result === 0;
   } catch (error) {
-    console.error('Signature verification error:', error);
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.error('Signature verification error:', error);
+    }
     return false;
   }
 }
