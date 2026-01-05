@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { POPULAR_ROUTES } from '@/lib/constants';
 
+// Popular routes component - displays most traveled bus routes
 const PopularRoutes = () => {
   return (
     <section className="py-20 bg-sand">
