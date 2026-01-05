@@ -3,6 +3,41 @@ import type { Database } from '@/integrations/supabase/types';
 
 type Schedule = Database['public']['Tables']['schedules']['Row'];
 
+// Map region slugs/names to UUIDs
+const REGION_SLUG_MAP: { [key: string]: string } = {
+  // Lowercase slugs
+  'dar-es-salaam': '69f1637e-8e92-4f58-a9b7-2e5354bbfd1f',
+  'arusha': 'accf65a1-6529-43be-8a62-ac5702b91cfd',
+  'mwanza': '183f2036-980a-435f-b9ad-aab370c1a791',
+  'dodoma': '1b846c1a-060b-4355-b638-d64ea082081a',
+  'mbeya': 'e9ad27af-f146-4ab4-8e49-244ff462eaab',
+  'kilimanjaro': '603177e5-f47c-492c-9b40-414cb94b3a9c',
+  'morogoro': '0296f203-73dc-48a4-933d-c0416bbc85af',
+  'tanga': 'f53940b9-d3af-45e4-9e52-037eac73acf0',
+  // Title case for direct mapping
+  'Dar es Salaam': '69f1637e-8e92-4f58-a9b7-2e5354bbfd1f',
+  'Arusha': 'accf65a1-6529-43be-8a62-ac5702b91cfd',
+  'Mwanza': '183f2036-980a-435f-b9ad-aab370c1a791',
+  'Dodoma': '1b846c1a-060b-4355-b638-d64ea082081a',
+  'Mbeya': 'e9ad27af-f146-4ab4-8e49-244ff462eaab',
+  'Kilimanjaro': '603177e5-f47c-492c-9b40-414cb94b3a9c',
+  'Morogoro': '0296f203-73dc-48a4-933d-c0416bbc85af',
+  'Tanga': 'f53940b9-d3af-45e4-9e52-037eac73acf0',
+};
+
+const resolveRegionId = (identifier: string | undefined): string | null => {
+  if (!identifier) return null;
+  // Check if it's already a UUID (36 chars, contains hyphens)
+  if (identifier.length === 36 && identifier.includes('-')) {
+    return identifier;
+  }
+  // Try to map slug to UUID
+  const uuid = REGION_SLUG_MAP[identifier];
+  if (uuid) return uuid;
+  // Fallback: assume it's a valid UUID
+  return identifier;
+};
+
 export interface ScheduleWithDetails extends Schedule {
   route: {
     id: string;
@@ -45,13 +80,17 @@ export interface SearchFilters {
 export const schedulesApi = {
   // Search schedules
   async searchSchedules(filters: SearchFilters): Promise<ScheduleWithDetails[]> {
+    // Resolve region identifiers (slugs or IDs) to actual UUIDs
+    const fromRegionId = resolveRegionId(filters.fromRegionId);
+    const toRegionId = resolveRegionId(filters.toRegionId);
+
     // Use database function to bypass RLS issues with PostgREST
     const { data: schedules, error } = await (supabase.rpc as any)('get_active_schedules', {
       p_departure_date: null,
       p_min_price: filters.minPrice || null,
       p_max_price: filters.maxPrice || null,
-      p_departure_region_id: filters.fromRegionId || null,
-      p_destination_region_id: filters.toRegionId || null,
+      p_departure_region_id: fromRegionId,
+      p_destination_region_id: toRegionId,
     });
 
     if (error) throw error;
