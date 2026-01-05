@@ -45,14 +45,26 @@ export interface SearchFilters {
 export const schedulesApi = {
   // Search schedules
   async searchSchedules(filters: SearchFilters): Promise<ScheduleWithDetails[]> {
-    // Use database function to bypass RLS issues with PostgREST
-    const { data: schedules, error } = await (supabase.rpc as any)('get_active_schedules', {
+    // Build RPC parameters object
+    const rpcParams = {
       p_departure_date: null,
       p_min_price: filters.minPrice || null,
       p_max_price: filters.maxPrice || null,
       p_departure_region_id: filters.fromRegionId || null,
       p_destination_region_id: filters.toRegionId || null,
-    });
+    };
+
+    console.log('🔍 Calling get_active_schedules with params:', rpcParams);
+
+    // Use database function to bypass RLS issues with PostgREST
+    const { data: schedules, error } = await (supabase.rpc as any)('get_active_schedules', rpcParams);
+
+    if (error) {
+      console.error('❌ RPC Error:', error);
+      throw error;
+    }
+    
+    console.log('✅ RPC Success - schedules returned:', schedules?.length || 0);
 
     if (error) throw error;
     if (!schedules || schedules.length === 0) return [];
