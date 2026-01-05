@@ -30,7 +30,7 @@ const PopularRoutes = () => {
               <div className="p-6 bg-gradient-to-br from-teal/5 to-amber/5">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <p className="text-lg font-semibold text-foreground">{route.from}</p>
+                    <p className="text-lg font-semibold text-foreground">{route.fromName}</p>
                     <p className="text-sm text-muted-foreground">Departure</p>
                   </div>
                   <div className="px-4">
@@ -39,7 +39,7 @@ const PopularRoutes = () => {
                     </div>
                   </div>
                   <div className="flex-1 text-right">
-                    <p className="text-lg font-semibold text-foreground">{route.to}</p>
+                    <p className="text-lg font-semibold text-foreground">{route.toName}</p>
                     <p className="text-sm text-muted-foreground">Arrival</p>
                   </div>
                 </div>
