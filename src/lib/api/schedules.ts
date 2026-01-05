@@ -47,7 +47,7 @@ export const schedulesApi = {
   async searchSchedules(filters: SearchFilters): Promise<ScheduleWithDetails[]> {
     // Use database function to bypass RLS issues with PostgREST
     const { data: schedules, error } = await (supabase.rpc as any)('get_active_schedules', {
-      p_departure_date: filters.date || new Date().toISOString().split('T')[0],
+      p_departure_date: null,
       p_min_price: filters.minPrice || null,
       p_max_price: filters.maxPrice || null,
       p_departure_region_id: filters.fromRegionId || null,
