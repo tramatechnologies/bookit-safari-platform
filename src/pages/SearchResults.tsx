@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MapPin, Calendar, Clock, ArrowRight, Filter, Wifi, Wind, Zap, Users, AlertCircle, Loader2, Bus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ const amenityIcons: Record<string, React.ComponentType<{ className?: string }>> 
 };
 
 const SearchResults = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const from = searchParams.get('from');

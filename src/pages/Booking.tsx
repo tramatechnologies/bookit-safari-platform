@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, AlertCircle, Users, Bus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
@@ -20,6 +21,7 @@ import { validateUuid } from '@/lib/validations/uuid';
 import { formatBookingError } from '@/lib/utils/error-messages';
 
 const Booking = () => {
+  const { t } = useTranslation();
   const { scheduleId: rawScheduleId } = useParams<{ scheduleId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, CreditCard, Smartphone, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ import { validateUuid } from '@/lib/validations/uuid';
 import { formatPaymentError } from '@/lib/utils/error-messages';
 
 const Payment = () => {
+  const { t } = useTranslation();
   const { bookingId: rawBookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Calendar, MapPin, Clock, Users, ArrowRight, X, Loader2, Bus, Download, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const MyBookings = () => {
+  const { t } = useTranslation();
   const { data: bookings, isLoading } = useBookings();
   const cancelBooking = useCancelBooking();
   const { toast } = useToast();
