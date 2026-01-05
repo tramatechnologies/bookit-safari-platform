@@ -1,19 +1,89 @@
+/* ============================== */
+/* ROOT ELEMENT - MOBILE FIRST    */
+/* ============================== */
 #root {
-  max-width: 1280px;
+  /* Mobile-first: 320px - 479px */
+  max-width: 100%;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
 }
 
+/* ============================== */
+/* TABLET BREAKPOINT - 480px      */
+/* ============================== */
+@media (min-width: 480px) {
+  #root {
+    max-width: 100%;
+    padding: 1.25rem;
+  }
+}
+
+/* ============================== */
+/* SMALL TABLET - 640px           */
+/* ============================== */
+@media (min-width: 640px) {
+  #root {
+    max-width: 100%;
+    padding: 1.5rem;
+  }
+}
+
+/* ============================== */
+/* TABLET BREAKPOINT - 768px      */
+/* ============================== */
+@media (min-width: 768px) {
+  #root {
+    max-width: 100%;
+    padding: 1.75rem;
+  }
+}
+
+/* ============================== */
+/* LARGE TABLET - 1024px          */
+/* ============================== */
+@media (min-width: 1024px) {
+  #root {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+}
+
+/* ============================== */
+/* DESKTOP - 1280px+              */
+/* ============================== */
+@media (min-width: 1280px) {
+  #root {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+}
+
+/* ============================== */
+/* XLARGE DESKTOP - 1400px+       */
+/* ============================== */
+@media (min-width: 1400px) {
+  #root {
+    max-width: 1400px;
+  }
+}
+
+/* ============================== */
+/* LOGO ANIMATIONS                */
+/* ============================== */
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -33,10 +103,120 @@
   }
 }
 
+/* ============================== */
+/* CARD STYLING - RESPONSIVE      */
+/* ============================== */
 .card {
-  padding: 2em;
+  /* Mobile first: smaller padding */
+  padding: 1em;
 }
 
+/* Tablet: 480px and up */
+@media (min-width: 480px) {
+  .card {
+    padding: 1.25em;
+  }
+}
+
+/* Small tablet: 640px and up */
+@media (min-width: 640px) {
+  .card {
+    padding: 1.5em;
+  }
+}
+
+/* Tablet: 768px and up */
+@media (min-width: 768px) {
+  .card {
+    padding: 1.75em;
+  }
+}
+
+/* Desktop: 1024px and up */
+@media (min-width: 1024px) {
+  .card {
+    padding: 2em;
+  }
+}
+
+/* ============================== */
+/* UTILITY CLASSES                */
+/* ============================== */
 .read-the-docs {
   color: #888;
+}
+
+/* ============================== */
+/* FORM RESPONSIVE STYLING        */
+/* ============================== */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .form-container {
+    gap: 1.5rem;
+  }
+}
+
+/* ============================== */
+/* GRID LAYOUTS - RESPONSIVE      */
+/* ============================== */
+.grid-cols-1-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .grid-cols-1-responsive {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-cols-1-responsive {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* ============================== */
+/* BUTTON & INPUT TOUCH TARGETS   */
+/* ============================== */
+button, input, textarea, select {
+  min-height: 44px;
+  font-size: 16px; /* Prevents auto-zoom on mobile iOS */
+}
+
+@media (min-width: 768px) {
+  button, input, textarea, select {
+    min-height: 40px;
+  }
+}
+
+/* ============================== */
+/* FLEX RESPONSIVE UTILITIES      */
+/* ============================== */
+.flex-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .flex-responsive {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+}
+
+/* ============================== */
+/* OVERFLOW FIX - LAYOUT STABILITY */
+/* ============================== */
+html, body {
+  overflow-y: scroll;
 }

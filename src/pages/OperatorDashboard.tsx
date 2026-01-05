@@ -190,15 +190,15 @@ const OperatorDashboard = () => {
       <div className="min-h-screen bg-background">
         <Header />
 
-        <div className="container mx-auto px-4 py-12 pt-24">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="font-display text-4xl font-bold mb-2">Operator Dashboard</h1>
-              <p className="text-muted-foreground">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-6 sm:py-8 md:py-12 pt-20 sm:pt-24">
+          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">Operator Dashboard</h1>
+              <p className="text-xs sm:text-sm md:text-base text-muted-foreground">
                 Manage your buses, routes, and bookings
               </p>
             </div>
-            <Button variant="teal" asChild>
+            <Button variant="teal" size="sm" asChild className="h-10 sm:h-9 w-full sm:w-auto flex-shrink-0">
               <Link to="/operator/schedules/new">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Schedule
@@ -207,12 +207,12 @@ const OperatorDashboard = () => {
           </div>
 
           {/* Period Selector */}
-          <div className="flex gap-2 mb-6">
+          <div className="flex gap-2 mb-4 sm:mb-6 flex-wrap">
             {(['today', 'week', 'month'] as const).map((period) => (
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                   selectedPeriod === period
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -224,25 +224,25 @@ const OperatorDashboard = () => {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-lg bg-teal/20 flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-teal" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-teal/20 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-teal" />
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-1">Bookings</p>
-              <p className="text-3xl font-bold">{stats?.bookings || 0}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-1">Bookings</p>
+              <p className="text-2xl sm:text-3xl font-bold">{stats?.bookings || 0}</p>
             </div>
 
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-green-500" />
+            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-500" />
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-1">Revenue</p>
-              <p className="text-3xl font-bold">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-1">Revenue</p>
+              <p className="text-2xl sm:text-3xl font-bold line-clamp-1">
                 {new Intl.NumberFormat('sw-TZ', {
                   style: 'currency',
                   currency: 'TZS',
@@ -251,74 +251,74 @@ const OperatorDashboard = () => {
               </p>
             </div>
 
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-lg bg-amber/20 flex items-center justify-center">
-                  <Bus className="w-6 h-6 text-amber" />
+            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-amber/20 flex items-center justify-center flex-shrink-0">
+                  <Bus className="w-5 h-5 sm:w-6 sm:h-6 text-amber" />
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-1">Buses</p>
-              <p className="text-3xl font-bold">{stats?.buses || 0}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-1">Buses</p>
+              <p className="text-2xl sm:text-3xl font-bold">{stats?.buses || 0}</p>
             </div>
 
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Calendar className="w-6 h-6 text-primary" />
+            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-1">Schedules</p>
-              <p className="text-3xl font-bold">{stats?.schedules || 0}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-1">Schedules</p>
+              <p className="text-2xl sm:text-3xl font-bold">{stats?.schedules || 0}</p>
             </div>
           </div>
 
           {/* Real-time Seat Availability */}
           {operatorSchedules && operatorSchedules.length > 0 && (
-            <div className="bg-card rounded-2xl border border-border p-6 mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <Zap className="w-6 h-6 text-teal" />
-                <h2 className="text-2xl font-bold">Real-Time Seat Availability</h2>
+            <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6 mb-6 sm:mb-8">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-teal flex-shrink-0" />
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold">Real-Time Seat Availability</h2>
               </div>
               <RealtimeSeatAvailability scheduleIds={operatorSchedules} />
             </div>
           )}
 
           {/* Quick Actions */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
             <Link
               to="/operator/buses"
-              className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
+              className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6 hover:shadow-lg transition-shadow"
             >
-              <Bus className="w-8 h-8 mb-3 text-teal" />
-              <h3 className="font-semibold mb-1">Manage Buses</h3>
-              <p className="text-sm text-muted-foreground">Add and manage your fleet</p>
+              <Bus className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mb-2 sm:mb-3 text-teal" />
+              <h3 className="font-semibold text-sm sm:text-base mb-1">Manage Buses</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Add and manage your fleet</p>
             </Link>
 
             <Link
               to="/operator/routes"
-              className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
+              className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6 hover:shadow-lg transition-shadow"
             >
-              <Users className="w-8 h-8 mb-3 text-amber" />
-              <h3 className="font-semibold mb-1">Manage Routes</h3>
-              <p className="text-sm text-muted-foreground">Create and edit routes</p>
+              <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mb-2 sm:mb-3 text-amber" />
+              <h3 className="font-semibold text-sm sm:text-base mb-1">Manage Routes</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Create and edit routes</p>
             </Link>
 
             <Link
               to="/operator/schedules"
-              className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
+              className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6 hover:shadow-lg transition-shadow"
             >
-              <Calendar className="w-8 h-8 mb-3 text-green-500" />
-              <h3 className="font-semibold mb-1">Manage Schedules</h3>
-              <p className="text-sm text-muted-foreground">Create trips & manage schedules</p>
+              <Calendar className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mb-2 sm:mb-3 text-green-500" />
+              <h3 className="font-semibold text-sm sm:text-base mb-1">Manage Schedules</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Create trips & manage schedules</p>
             </Link>
 
             <Link
               to="/operator/bookings"
-              className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-shadow"
+              className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6 hover:shadow-lg transition-shadow"
             >
-              <Calendar className="w-8 h-8 mb-3 text-primary" />
-              <h3 className="font-semibold mb-1">View Bookings</h3>
-              <p className="text-sm text-muted-foreground">See all your bookings</p>
+              <Calendar className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 mb-2 sm:mb-3 text-primary" />
+              <h3 className="font-semibold text-sm sm:text-base mb-1">View Bookings</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">See all your bookings</p>
             </Link>
           </div>
         </div>

@@ -406,45 +406,45 @@ const Booking = () => {
       <div className="min-h-screen bg-background">
         <Header />
 
-        <div className="container mx-auto px-4 py-8 pt-24">
+        <div className="container mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 pt-20 sm:pt-24">
           {/* Back Button */}
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="mb-6"
+            className="mb-4 sm:mb-6 h-10 sm:h-9"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Search
           </Button>
 
-          <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Operator & Bus Information */}
-              <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
-                <h2 className="font-display text-xl font-bold mb-4">Company & Bus Information</h2>
+              <div className="bg-card rounded-lg sm:rounded-xl md:rounded-2xl border border-border p-4 sm:p-5 md:p-6 space-y-4">
+                <h2 className="font-display text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4">Company & Bus Information</h2>
                 <div className="space-y-4">
                   {/* Operator Info */}
                   {schedule.route?.operator && (
-                    <div className="flex items-center gap-3 pb-4 border-b border-border">
+                    <div className="flex items-center gap-2 sm:gap-3 pb-3 sm:pb-4 border-b border-border">
                       {(schedule.route.operator as any).logo_url ? (
                         <img
                           src={(schedule.route.operator as any).logo_url}
                           alt={schedule.route.operator.company_name || 'Operator logo'}
-                          className="w-12 h-12 rounded-lg object-cover border border-border"
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover border border-border flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-teal/20 flex items-center justify-center">
-                          <Users className="w-6 h-6 text-teal" />
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-teal/20 flex items-center justify-center flex-shrink-0">
+                          <Users className="w-5 h-5 sm:w-6 sm:h-6 text-teal" />
                         </div>
                       )}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-lg">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-base sm:text-lg truncate">
                             {schedule.route.operator.company_name}
                           </p>
                           {schedule.route.operator.status === 'approved' && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/20 text-green-600 rounded text-xs font-medium">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-500/20 text-green-600 rounded text-xs font-medium flex-shrink-0">
                               <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
                               Verified
                             </span>
@@ -458,35 +458,35 @@ const Booking = () => {
                   {schedule.bus && (
                     <div className="space-y-3">
                       {schedule.bus.plate_number && (
-                        <div className="flex items-center gap-3">
-                          <Bus className="w-5 h-5 text-amber" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">License Plate</p>
-                            <p className="font-mono font-semibold text-lg">{schedule.bus.plate_number}</p>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <Bus className="w-5 h-5 text-amber flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">License Plate</p>
+                            <p className="font-mono font-semibold text-base sm:text-lg">{schedule.bus.plate_number}</p>
                           </div>
                         </div>
                       )}
                       {schedule.bus.bus_type && (
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5" />
-                          <div>
-                            <p className="text-sm text-muted-foreground">Bus Type</p>
-                            <span className="inline-block px-3 py-1 bg-teal/20 text-teal rounded text-sm font-medium mt-1">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-5 h-5 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground">Bus Type</p>
+                            <span className="inline-block px-3 py-1 bg-teal/20 text-teal rounded text-xs sm:text-sm font-medium mt-1">
                               {schedule.bus.bus_type}
                             </span>
                           </div>
                         </div>
                       )}
                       {schedule.bus.amenities && schedule.bus.amenities.length > 0 && (
-                        <div className="flex items-start gap-3 pt-2">
-                          <div className="w-5 h-5" />
-                          <div className="flex-1">
-                            <p className="text-sm text-muted-foreground mb-2">Amenities</p>
+                        <div className="flex items-start gap-2 sm:gap-3 pt-2">
+                          <div className="w-5 h-5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs sm:text-sm text-muted-foreground mb-2">Amenities</p>
                             <div className="flex flex-wrap gap-2">
                               {schedule.bus.amenities.map((amenity, index) => (
                                 <span
                                   key={index}
-                                  className="px-3 py-1 bg-muted border border-border rounded-full text-xs text-foreground"
+                                  className="px-2 sm:px-3 py-1 bg-muted border border-border rounded-full text-xs text-foreground"
                                 >
                                   {amenity}
                                 </span>
@@ -534,7 +534,7 @@ const Booking = () => {
 
             {/* Sidebar - Booking Summary */}
             <div className="lg:col-span-1">
-              <div className="sticky top-24">
+              <div className="sticky top-16 sm:top-20 md:top-24">
                 <BookingSummary
                   schedule={schedule as any}
                   selectedSeats={selectedSeatIds}

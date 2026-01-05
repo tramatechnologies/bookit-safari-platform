@@ -342,42 +342,42 @@ const Payment = () => {
       <div className="min-h-screen bg-background">
         <Header />
 
-        <div className="container mx-auto px-4 py-8 pt-24 max-w-4xl">
+        <div className="container mx-auto px-4 py-8 pt-20 sm:pt-24 md:pt-28 max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl">
           {/* Back Button */}
           <Button
             variant="ghost"
             onClick={() => navigate(-1)}
-            className="mb-6"
+            className="mb-4 sm:mb-6 h-10 sm:h-11"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
 
           {paymentStatus === 'success' ? (
-            <div className="bg-card rounded-2xl border border-border p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-teal/20 flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-teal" />
+            <div className="bg-card rounded-lg sm:rounded-2xl border border-border p-6 sm:p-8 text-center">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-teal/20 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-teal" />
               </div>
-              <h2 className="font-display text-3xl font-bold mb-2">Payment Successful!</h2>
-              <p className="text-muted-foreground mb-6">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold mb-2">Payment Successful!</h2>
+              <p className="text-sm sm:text-base text-muted-foreground mb-6">
                 Your booking has been confirmed. Redirecting to confirmation page...
               </p>
               <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
             </div>
           ) : (
-            <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
               {/* Payment Form */}
               <div className="lg:col-span-2">
-                <div className="bg-card rounded-2xl border border-border p-6">
-                  <h2 className="font-display text-2xl font-bold mb-6">Payment Method</h2>
+                <div className="bg-card rounded-lg sm:rounded-2xl border border-border p-4 sm:p-6">
+                  <h2 className="font-display text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Payment Method</h2>
 
-                  <form onSubmit={handlePayment} className="space-y-6">
+                  <form onSubmit={handlePayment} className="space-y-4 sm:space-y-6">
                     <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                       {/* M-Pesa */}
-                      <div className={`flex items-center space-x-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      <div className={`flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all min-h-[60px] sm:min-h-auto ${
                         paymentMethod === 'mpesa' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
                       }`}>
-                        <RadioGroupItem value="mpesa" id="mpesa" />
+                        <RadioGroupItem value="mpesa" id="mpesa" className="flex-shrink-0" />
                         <Label htmlFor="mpesa" className="flex-1 cursor-pointer">
                           <div className="flex items-center gap-4">
                             <img 
@@ -394,60 +394,60 @@ const Payment = () => {
                       </div>
 
                       {/* Tigo Pesa */}
-                      <div className={`flex items-center space-x-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      <div className={`flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all min-h-[60px] sm:min-h-auto ${
                         paymentMethod === 'tigopesa' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
                       }`}>
-                        <RadioGroupItem value="tigopesa" id="tigopesa" />
+                        <RadioGroupItem value="tigopesa" id="tigopesa" className="flex-shrink-0" />
                         <Label htmlFor="tigopesa" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 sm:gap-4">
                             <img 
                               src="/images/Mixx By Yas.jpg" 
                               alt="Tigo Pesa" 
-                              className="w-12 h-12 object-contain"
+                              className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
                             />
-                            <div>
-                              <p className="font-medium">Tigo Pesa</p>
-                              <p className="text-sm text-muted-foreground">Mobile Money</p>
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm sm:text-base">Tigo Pesa</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Mobile Money</p>
                             </div>
                           </div>
                         </Label>
                       </div>
 
                       {/* Airtel Money */}
-                      <div className={`flex items-center space-x-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      <div className={`flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all min-h-[60px] sm:min-h-auto ${
                         paymentMethod === 'airtel' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
                       }`}>
-                        <RadioGroupItem value="airtel" id="airtel" />
+                        <RadioGroupItem value="airtel" id="airtel" className="flex-shrink-0" />
                         <Label htmlFor="airtel" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 sm:gap-4">
                             <img 
                               src="/images/AIrtel Money.jpg" 
                               alt="Airtel Money" 
-                              className="w-12 h-12 object-contain"
+                              className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
                             />
-                            <div>
-                              <p className="font-medium">Airtel Money</p>
-                              <p className="text-sm text-muted-foreground">Mobile Money</p>
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm sm:text-base">Airtel Money</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Mobile Money</p>
                             </div>
                           </div>
                         </Label>
                       </div>
 
                       {/* HaloPesa */}
-                      <div className={`flex items-center space-x-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                      <div className={`flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all min-h-[60px] sm:min-h-auto ${
                         paymentMethod === 'halopesa' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
                       }`}>
-                        <RadioGroupItem value="halopesa" id="halopesa" />
+                        <RadioGroupItem value="halopesa" id="halopesa" className="flex-shrink-0" />
                         <Label htmlFor="halopesa" className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 sm:gap-4">
                             <img 
                               src="/images/Halopesa.png" 
                               alt="HaloPesa" 
-                              className="w-12 h-12 object-contain"
+                              className="w-10 h-10 sm:w-12 sm:h-12 object-contain flex-shrink-0"
                             />
-                            <div>
-                              <p className="font-medium">HaloPesa</p>
-                              <p className="text-sm text-muted-foreground">Mobile Money</p>
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm sm:text-base">HaloPesa</p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">Mobile Money</p>
                             </div>
                           </div>
                         </Label>

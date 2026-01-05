@@ -142,28 +142,28 @@ const Profile = () => {
   return (
     <ProtectedRoute>
       <DashboardLayout>
-        <div className="p-6 max-w-4xl">
-          <div className="mb-8 flex items-start justify-between">
-            <div>
-              <h1 className="text-2xl font-bold mb-2">My Profile</h1>
-              <p className="text-muted-foreground">
+        <div className="p-4 sm:p-6 md:p-8 max-w-full sm:max-w-2xl md:max-w-4xl">
+          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">My Profile</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Manage your account information and preferences
               </p>
             </div>
             {saveSuccess && (
-              <div className="flex items-center gap-2 bg-teal/10 border border-teal/30 rounded-lg px-4 py-2">
-                <CheckCircle className="w-5 h-5 text-teal" />
-                <span className="text-sm font-medium text-teal">Changes saved</span>
+              <div className="flex items-center gap-2 bg-teal/10 border border-teal/30 rounded-lg px-3 sm:px-4 py-2 flex-shrink-0">
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-teal flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-teal whitespace-nowrap">Changes saved</span>
               </div>
             )}
           </div>
 
-          <div className="bg-card rounded-2xl border border-border p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="full_name">Full Name</Label>
+          <div className="bg-card rounded-lg sm:rounded-2xl border border-border p-4 sm:p-6 md:p-8">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="space-y-2 sm:space-y-3">
+                <Label htmlFor="full_name" className="text-sm sm:text-base">Full Name</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0 pointer-events-none" />
                   <Input
                     id="full_name"
                     value={profile.full_name}
@@ -171,20 +171,20 @@ const Profile = () => {
                       setProfile({ ...profile, full_name: e.target.value });
                       if (errors.full_name) setErrors({ ...errors, full_name: '' });
                     }}
-                    className={`pl-10 ${errors.full_name ? 'border-destructive' : ''}`}
+                    className={`pl-10 h-12 sm:h-11 text-base sm:text-sm ${errors.full_name ? 'border-destructive' : ''}`}
                     required
                     disabled={loading}
                   />
                   {errors.full_name && (
-                    <p className="text-xs text-destructive mt-1">{errors.full_name}</p>
+                    <p className="text-xs sm:text-sm text-destructive mt-1">{errors.full_name}</p>
                   )}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+              <div className="space-y-2 sm:space-y-3">
+                <Label htmlFor="email" className="text-sm sm:text-base">Email Address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0 pointer-events-none" />
                   <Input
                     id="email"
                     type="email"
@@ -192,20 +192,20 @@ const Profile = () => {
                     onChange={(e) =>
                       setProfile({ ...profile, email: e.target.value })
                     }
-                    className="pl-10"
+                    className="pl-10 h-12 sm:h-11 text-base sm:text-sm"
                     required
                     disabled
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                     Email cannot be changed. Contact support if you need to update it.
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
+              <div className="space-y-2 sm:space-y-3">
+                <Label htmlFor="phone" className="text-sm sm:text-base">Phone Number</Label>
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0 pointer-events-none" />
                   <Input
                     id="phone"
                     type="tel"
@@ -217,15 +217,15 @@ const Profile = () => {
                       setProfile({ ...profile, phone: value });
                       if (errors.phone) setErrors({ ...errors, phone: '' });
                     }}
-                    className={`pl-10 ${errors.phone ? 'border-destructive' : ''}`}
+                    className={`pl-10 h-12 sm:h-11 text-base sm:text-sm ${errors.phone ? 'border-destructive' : ''}`}
                     placeholder="Enter your phone number"
                     disabled={loading}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
                     Examples: +255712345678, 255712345678, or 0712345678
                   </p>
                   {errors.phone && (
-                    <p className="text-xs text-destructive mt-1">{errors.phone}</p>
+                    <p className="text-xs sm:text-sm text-destructive mt-1">{errors.phone}</p>
                   )}
                 </div>
               </div>
@@ -234,17 +234,17 @@ const Profile = () => {
                 type="submit"
                 variant="teal"
                 size="lg"
-                className="w-full"
+                className="w-full h-12 sm:h-11 text-base sm:text-sm"
                 disabled={loading}
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin flex-shrink-0" />
                     Saving...
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4 mr-2" />
+                    <Save className="w-4 h-4 mr-2 flex-shrink-0" />
                     Save Changes
                   </>
                 )}
