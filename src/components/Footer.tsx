@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react';
 import OptimizedImage from '@/components/Image';
 
 const Footer = () => {
+  const { t } = useTranslation();
+  
   return (
     <footer className="bg-foreground text-primary-foreground">
       <div className="container mx-auto px-4 py-16">
@@ -23,7 +26,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className="text-primary-foreground/70 text-sm leading-relaxed">
-              Your trusted partner for bus travel across Tanzania. Book tickets easily, 
+              {t('common.bookItSafari')} - Your trusted partner for bus travel across Tanzania. Book tickets easily, 
               travel comfortably, and explore the beauty of our nation.
             </p>
             <div className="flex gap-3">

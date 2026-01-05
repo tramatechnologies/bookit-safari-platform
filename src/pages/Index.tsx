@@ -1,5 +1,6 @@
 import { ArrowRight, Users, MapPin, Bus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -11,13 +12,15 @@ import Testimonials from '@/components/Testimonials';
 import CTASection from '@/components/CTASection';
 import heroBus from '@/assets/hero-bus.jpg';
 
-const stats = [
-  { icon: Users, value: '50,000+', label: 'Happy Travelers' },
-  { icon: MapPin, value: '31', label: 'Regions Covered' },
-  { icon: Bus, value: '100+', label: 'Bus Operators' },
-];
-
 const Index = () => {
+  const { t } = useTranslation();
+  
+  const stats = [
+    { icon: Users, value: '50,000+', label: t('stats.happyTravelers') },
+    { icon: MapPin, value: '31', label: t('stats.regionsCovered') },
+    { icon: Bus, value: '100+', label: t('stats.busOperators') },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -46,33 +49,31 @@ const Index = () => {
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 mb-6 animate-fade-up">
               <span className="w-2 h-2 rounded-full bg-amber animate-pulse" />
               <span className="text-sm text-primary-foreground/90">
-                Tanzania's #1 Bus Booking Platform
+                {t('header.tagline')}
               </span>
             </div>
 
             {/* Headline */}
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6 leading-tight animate-fade-up" style={{ animationDelay: '100ms' }}>
-              Travel Across{' '}
-              <span className="text-amber">Tanzania</span>{' '}
-              With Ease
+              {t('hero.headline')}
             </h1>
 
             {/* Subheadline */}
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-8 max-w-xl animate-fade-up" style={{ animationDelay: '200ms' }}>
-              Book bus tickets to any region in Tanzania. Compare prices, choose your seat, and pay securely with mobile money or card.
+              {t('hero.subheadline')}
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-4 mb-12 animate-fade-up" style={{ animationDelay: '300ms' }}>
               <Button variant="hero" size="xl" asChild>
                 <Link to="/search">
-                  Book Your Trip
+                  {t('hero.bookYourTrip')}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Link>
               </Button>
               <Button variant="hero-outline" size="xl" asChild>
                 <Link to="/routes">
-                  View All Routes
+                  {t('hero.viewAllRoutes')}
                 </Link>
               </Button>
             </div>

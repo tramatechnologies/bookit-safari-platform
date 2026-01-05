@@ -1,51 +1,53 @@
 import { Shield, Clock, CreditCard, Headphones, MapPin, Star } from 'lucide-react';
-
-const features = [
-  {
-    icon: Shield,
-    title: 'Secure Booking',
-    description: 'Your data and payments are protected with bank-level encryption.',
-  },
-  {
-    icon: Clock,
-    title: 'Real-time Updates',
-    description: 'Get instant notifications about schedule changes and delays.',
-  },
-  {
-    icon: CreditCard,
-    title: 'Easy Payments',
-    description: 'Pay with M-Pesa, Tigo Pesa, Airtel Money, or cards via ClickPesa.',
-  },
-  {
-    icon: Headphones,
-    title: '24/7 Support',
-    description: 'Our team is always here to help you with any questions.',
-  },
-  {
-    icon: MapPin,
-    title: 'All of Tanzania',
-    description: 'Connect to all 31 regions with trusted bus operators.',
-  },
-  {
-    icon: Star,
-    title: 'Verified Operators',
-    description: 'All operators are vetted for safety and quality service.',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const Features = () => {
+  const { t } = useTranslation();
+  
+  const features = [
+    {
+      icon: Shield,
+      title: t('features.secureBooking'),
+      description: t('features.secureBookingDesc'),
+    },
+    {
+      icon: Clock,
+      title: t('features.realtimeUpdates'),
+      description: t('features.realtimeUpdatesDesc'),
+    },
+    {
+      icon: CreditCard,
+      title: t('features.easyPayments'),
+      description: t('features.easyPaymentsDesc'),
+    },
+    {
+      icon: Headphones,
+      title: t('features.support24'),
+      description: t('features.support24Desc'),
+    },
+    {
+      icon: MapPin,
+      title: t('features.allOfTanzania'),
+      description: t('features.allOfTanzaniaDesc'),
+    },
+    {
+      icon: Star,
+      title: t('features.verifiedOperators'),
+      description: t('features.verifiedOperatorsDesc'),
+    },
+  ];
   return (
     <section className="py-20 gradient-hero text-primary-foreground">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary-foreground/10 text-amber text-sm font-medium mb-4">
-            Why BookitSafari
+            {t('features.whyBookItSafari')}
           </span>
           <h2 className="font-display text-3xl lg:text-4xl font-bold mb-4">
-            Travel With Confidence
+            {t('features.travelWithConfidence')}
           </h2>
           <p className="text-primary-foreground/70">
-            We're committed to making your journey across Tanzania safe, comfortable, and hassle-free.
+            {t('features.weAreCommitted')}
           </p>
         </div>
 

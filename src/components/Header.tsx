@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, User, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -9,6 +10,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -48,13 +50,13 @@ const Header = () => {
               to="/" 
               className="text-sm font-medium text-foreground hover:text-primary transition-colors"
             >
-              Home
+              {t('common.home')}
             </Link>
             <Link 
               to="/search" 
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
-              Find Buses
+              {t('common.search')}
             </Link>
             <Link 
               to="/routes" 
@@ -66,13 +68,13 @@ const Header = () => {
               to="/operators" 
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
-              Operators
+              {t('common.operators')}
             </Link>
             <Link 
               to="/help" 
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
             >
-              Help
+              {t('common.help')}
             </Link>
           </nav>
 

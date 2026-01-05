@@ -1,45 +1,47 @@
 import { Search, CreditCard, Ticket, Bus } from 'lucide-react';
-
-const steps = [
-  {
-    icon: Search,
-    title: 'Search',
-    description: 'Enter your departure city, destination, and travel date to find available buses.',
-    color: 'teal',
-  },
-  {
-    icon: Bus,
-    title: 'Choose',
-    description: 'Compare buses, departure times, prices, and amenities to find your perfect ride.',
-    color: 'amber',
-  },
-  {
-    icon: CreditCard,
-    title: 'Pay',
-    description: 'Securely pay using ClickPesa, mobile money, or card payments.',
-    color: 'teal',
-  },
-  {
-    icon: Ticket,
-    title: 'Travel',
-    description: 'Receive your e-ticket with QR code. Show it at boarding and enjoy your journey!',
-    color: 'amber',
-  },
-];
+import { useTranslation } from 'react-i18next';
 
 const HowItWorks = () => {
+  const { t } = useTranslation();
+  
+  const steps = [
+    {
+      icon: Search,
+      title: t('howItWorks.search'),
+      description: t('howItWorks.searchDesc'),
+      color: 'teal',
+    },
+    {
+      icon: Bus,
+      title: t('howItWorks.choose'),
+      description: t('howItWorks.chooseDesc'),
+      color: 'amber',
+    },
+    {
+      icon: CreditCard,
+      title: t('howItWorks.pay'),
+      description: t('howItWorks.payDesc'),
+      color: 'teal',
+    },
+    {
+      icon: Ticket,
+      title: t('howItWorks.travel'),
+      description: t('howItWorks.travelDesc'),
+      color: 'amber',
+    },
+  ];
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full bg-teal/10 text-teal text-sm font-medium mb-4">
-            Simple Process
+            {t('howItWorks.simpleProcess')}
           </span>
           <h2 className="font-display text-3xl lg:text-4xl font-bold text-foreground mb-4">
-            How It Works
+            {t('howItWorks.howItWorks')}
           </h2>
           <p className="text-muted-foreground">
-            Book your bus ticket in just a few simple steps. Fast, easy, and secure.
+            {t('howItWorks.bookInSteps')}
           </p>
         </div>
 
