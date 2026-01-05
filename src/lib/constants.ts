@@ -39,8 +39,8 @@ export type RegionId = typeof TANZANIA_REGIONS[number]['id'];
 export const POPULAR_ROUTES = [
   {
     id: 1,
-    from: 'dar-es-salaam',
-    to: 'arusha',
+    from: '69f1637e-8e92-4f58-a9b7-2e5354bbfd1f', // Dar es Salaam
+    to: 'accf65a1-6529-43be-8a62-ac5702b91cfd', // Arusha
     fromName: 'Dar es Salaam',
     toName: 'Arusha',
     duration: '9-10 hrs',
@@ -48,8 +48,8 @@ export const POPULAR_ROUTES = [
   },
   {
     id: 2,
-    from: 'dar-es-salaam',
-    to: 'mwanza',
+    from: '69f1637e-8e92-4f58-a9b7-2e5354bbfd1f', // Dar es Salaam
+    to: '183f2036-980a-435f-b9ad-aab370c1a791', // Mwanza
     fromName: 'Dar es Salaam',
     toName: 'Mwanza',
     duration: '14-16 hrs',
@@ -57,8 +57,8 @@ export const POPULAR_ROUTES = [
   },
   {
     id: 3,
-    from: 'arusha',
-    to: 'kilimanjaro',
+    from: 'accf65a1-6529-43be-8a62-ac5702b91cfd', // Arusha
+    to: '603177e5-f47c-492c-9b40-414cb94b3a9c', // Kilimanjaro
     fromName: 'Arusha',
     toName: 'Moshi',
     duration: '1-2 hrs',
@@ -66,8 +66,8 @@ export const POPULAR_ROUTES = [
   },
   {
     id: 4,
-    from: 'dar-es-salaam',
-    to: 'dodoma',
+    from: '69f1637e-8e92-4f58-a9b7-2e5354bbfd1f', // Dar es Salaam
+    to: '1b846c1a-060b-4355-b638-d64ea082081a', // Dodoma
     fromName: 'Dar es Salaam',
     toName: 'Dodoma',
     duration: '6-7 hrs',
@@ -75,8 +75,8 @@ export const POPULAR_ROUTES = [
   },
   {
     id: 5,
-    from: 'dar-es-salaam',
-    to: 'mbeya',
+    from: '69f1637e-8e92-4f58-a9b7-2e5354bbfd1f', // Dar es Salaam
+    to: 'e9ad27af-f146-4ab4-8e49-244ff462eaab', // Mbeya
     fromName: 'Dar es Salaam',
     toName: 'Mbeya',
     duration: '10-12 hrs',
@@ -84,8 +84,8 @@ export const POPULAR_ROUTES = [
   },
   {
     id: 6,
-    from: 'mwanza',
-    to: 'arusha',
+    from: '183f2036-980a-435f-b9ad-aab370c1a791', // Mwanza
+    to: 'accf65a1-6529-43be-8a62-ac5702b91cfd', // Arusha
     fromName: 'Mwanza',
     toName: 'Arusha',
     duration: '8-10 hrs',
