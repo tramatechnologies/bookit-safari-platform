@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import OptimizedImage from '@/components/Image';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -76,7 +77,8 @@ const Header = () => {
           </nav>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center gap-3 min-w-[200px] justify-end">
+          <div className="hidden md:flex items-center gap-2 sm:gap-3 min-w-[250px] justify-end">
+            <LanguageSwitcher />
             {!loading && user ? (
               <>
                 <Button variant="ghost" size="sm" asChild>
@@ -136,6 +138,9 @@ const Header = () => {
       {mobileMenuOpen && (
         <div className="md:hidden bg-background border-t border-border animate-fade-in">
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            <div className="flex justify-end mb-2">
+              <LanguageSwitcher />
+            </div>
             <Link 
               to="/" 
               className="px-4 py-3 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
